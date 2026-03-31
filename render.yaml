@@ -8,8 +8,8 @@ services:
     runtime: node
     region: oregon   # or singapore, frankfurt — pick closest to your users
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install
+    startCommand: npm run start:server
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -26,6 +26,21 @@ services:
         value: "noreply@yourdomain.com"
       - key: EMAIL_TO
         value: "hrithikgh29@gmail.com"
+      - key: ABUSE_ADMIN_PASSWORD
+        sync: false  # set manually in Render dashboard — never in code
+      - key: OPENAI_API_KEY
+        sync: false  # for Whisper transcription — set in dashboard
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
     autoDeploy: true
-    # Free tier spins down after 15 min inactivity — first request takes ~30s
-    # Consider UptimeRobot (free) to ping /api/health every 14 min to stay warm
+    # Free tier spins down after 15 min inactivity — first request takes ~30s.
+    # Consider UptimeRobot (free) to ping /api/health every 14 min to stay warm.
+    # NOTE: Free tier has an ephemeral filesystem — data/visitors.json is wiped on
+    # each restart/deploy. Upgrade to a Render Persistent Disk ($0.25/GB/month)
+    # or migrate visitors.json to Upstash Redis if you need durable visitor data.

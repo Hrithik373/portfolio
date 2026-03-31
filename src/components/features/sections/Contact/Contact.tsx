@@ -1,5 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { useScrollReveal } from '../../../../hooks/useScrollAnimation'
+import { gsap, ScrollTrigger } from '../../../../lib/gsap-setup'
 
 import { apiUrl } from '../../../../config/apiBase'
 import { getClientAdminBypassEmails } from '../../../../config/adminBypass'
@@ -9,46 +11,6 @@ import { SectionShell } from '../SectionShell/SectionShell'
 import type { SectionProps } from '../SectionTypes'
 import { dayGlassSection, nightGlassSection } from '../sectionGlass'
 import { collectFingerprint } from '../../../../lib/fingerprint'
-const contactGrid = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.14, delayChildren: 0.04 },
-  },
-}
-
-const contactColLeft = {
-  hidden: { opacity: 0, x: -28 },
-  show: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-  },
-}
-
-const contactColRight = {
-  hidden: { opacity: 0, x: 28 },
-  show: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-  },
-}
-
-const formFieldsStagger = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.085, delayChildren: 0.14 },
-  },
-}
-
-const formFieldItem = {
-  hidden: { opacity: 0, y: 16 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] as const },
-  },
-}
 
 function contactCardShimmerLayer(reduced: boolean) {
   if (reduced) return null
@@ -70,6 +32,60 @@ function contactCardShimmerLayer(reduced: boolean) {
 export function Contact({ theme }: SectionProps) {
   const isNight = theme === 'night'
   const reduced = useReducedMotion() ?? false
+
+  // GSAP scroll hooks
+  const gridRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+    start: 'top 85%',
+  })
+  const formRef = useScrollReveal<HTMLFormElement>({
+    from: { opacity: 0, x: -28 },
+    to: { opacity: 1, x: 0 },
+    start: 'top 85%',
+  })
+  const rightColRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0, x: 28 },
+    to: { opacity: 1, x: 0 },
+    start: 'top 85%',
+  })
+  const formFieldsRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0, y: 16 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 88%',
+    children: '.form-field-item',
+    stagger: 0.085,
+  })
+  const taglineRef = useScrollReveal<HTMLParagraphElement>({
+    from: { opacity: 0, y: 16 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 88%',
+  })
+  const contactLinksRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0, y: 14 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 88%',
+    children: '.contact-link',
+    stagger: 0.06,
+  })
+
+  // Vertical ink lines via GSAP
+  const lineLeftRef = useRef<HTMLDivElement>(null)
+  const lineRightRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const targets = [lineLeftRef.current, lineRightRef.current].filter(Boolean)
+    if (!targets.length) return
+    const sts = targets.map((el) => {
+      gsap.set(el, { scaleY: 0, transformOrigin: 'top center' })
+      return ScrollTrigger.create({
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+        onEnter: () => gsap.to(el, { scaleY: 1, duration: 0.85, ease: 'power3.out' }),
+      })
+    })
+    return () => sts.forEach((st) => st.kill())
+  }, [])
   const [isSending, setIsSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
   const [lastInstance, setLastInstance] = useState<{ instanceId: string; petalName?: string; petalColor?: string } | null>(
@@ -113,15 +129,12 @@ export function Contact({ theme }: SectionProps) {
       mainAlign="start"
       backgroundVideo="https://motionbgs.com/dl/hd/2915"
     >
-      <motion.div
+      <div
+        ref={gridRef}
         className="grid min-w-0 gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
-        variants={contactGrid}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.12, margin: '0px 0px 80px 0px' }}
       >
         <motion.form
-          variants={contactColLeft}
+          ref={formRef}
           className={`relative overflow-hidden p-5 text-sm ${
             isNight ? `${nightGlassSection} text-parchment/95` : `${dayGlassSection} text-[color:var(--dawn-text)]`
           }`}
@@ -263,14 +276,11 @@ export function Contact({ theme }: SectionProps) {
           >
             問
           </motion.span>
-          <motion.div
+          <div
+            ref={lineLeftRef}
             className={`pointer-events-none absolute left-4 top-5 h-14 w-px origin-top sm:left-5 sm:top-6 ${
               isNight ? 'bg-gradient-to-b from-sakura-pink/45 to-transparent' : 'bg-gradient-to-b from-rose-400/45 to-transparent'
             }`}
-            initial={{ scaleY: reduced ? 1 : 0 }}
-            whileInView={{ scaleY: 1 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ delay: 0.25, duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             aria-hidden
           />
           <div
@@ -295,27 +305,21 @@ export function Contact({ theme }: SectionProps) {
               aria-hidden="true"
             />
           )}
-          <motion.div
-            className="relative z-10 space-y-4"
-            variants={formFieldsStagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.08 }}
-          >
-          <motion.div variants={formFieldItem} className="grid min-w-0 gap-3 sm:grid-cols-[repeat(2,minmax(0,1fr))]">
+          <div ref={formFieldsRef} className="relative z-10 space-y-4">
+          <div className="form-field-item grid min-w-0 gap-3 sm:grid-cols-[repeat(2,minmax(0,1fr))]">
             <Field label="Name" id="name" theme={theme}>
               <input id="name" name="name" className={inputClass} required />
             </Field>
             <Field label="Email" id="email" theme={theme}>
               <input id="email" name="email" type="email" className={inputClass} required />
             </Field>
-          </motion.div>
-          <motion.div variants={formFieldItem}>
+          </div>
+          <div className="form-field-item">
             <Field label="Subject" id="subject" theme={theme}>
               <input id="subject" name="subject" className={inputClass} required />
             </Field>
-          </motion.div>
-          <motion.div variants={formFieldItem}>
+          </div>
+          <div className="form-field-item">
             <Field label="Message" id="message" theme={theme}>
               <textarea
                 id="message"
@@ -325,8 +329,8 @@ export function Contact({ theme }: SectionProps) {
                 required
               />
             </Field>
-          </motion.div>
-          <motion.div variants={formFieldItem} className="flex items-center justify-between gap-3">
+          </div>
+          <div className="form-field-item flex items-center justify-between gap-3">
             <button
               type="submit"
               disabled={isSending}
@@ -412,11 +416,11 @@ export function Contact({ theme }: SectionProps) {
                 Show ID
               </button>
             ) : null}
-          </motion.div>
-          </motion.div>
+          </div>
+          </div>
         </motion.form>
         <motion.div
-          variants={contactColRight}
+          ref={rightColRef}
           className={`relative min-w-0 overflow-hidden px-6 py-6 ${
             isNight ? `${nightGlassSection} text-parchment/95` : `${dayGlassSection} text-[color:var(--dawn-text)]`
           }`}
@@ -434,14 +438,11 @@ export function Contact({ theme }: SectionProps) {
           >
             繋
           </motion.span>
-          <motion.div
+          <div
+            ref={lineRightRef}
             className={`pointer-events-none absolute right-5 top-6 hidden h-12 w-px origin-top sm:block ${
               isNight ? 'bg-gradient-to-b from-sakura-pink/35 to-transparent' : 'bg-gradient-to-b from-rose-400/35 to-transparent'
             }`}
-            initial={{ scaleY: reduced ? 1 : 0 }}
-            whileInView={{ scaleY: 1 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ delay: 0.35, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             aria-hidden
           />
           <div
@@ -467,32 +468,25 @@ export function Contact({ theme }: SectionProps) {
             />
           )}
           <div className="relative z-10 space-y-5">
-            <motion.p
+            <p
+              ref={taglineRef}
               className={`font-jp-hand text-[0.95rem] leading-relaxed ${
                 isNight
                   ? 'text-parchment/95 drop-shadow-[0_0_6px_rgba(255,220,230,0.35)]'
                   : 'text-[color:var(--dawn-text)] [text-shadow:0_0_24px_rgba(245,198,214,0.35)]'
               }`}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.12 }}
-              transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
             >
               Seeking AI/ML roles building calm, reliable systems that blend strong backend foundations with
               responsible AI delivery.
-            </motion.p>
-            <div className="grid min-w-0 gap-3 text-xs sm:grid-cols-[repeat(2,minmax(0,1fr))]">
+            </p>
+            <div ref={contactLinksRef} className="grid min-w-0 gap-3 text-xs sm:grid-cols-[repeat(2,minmax(0,1fr))]">
               <motion.a
-                className={`group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
+                className={`contact-link group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
                   isNight
                     ? 'border-white/[0.14] bg-black/35 text-parchment/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-white/20 hover:bg-black/45'
                     : 'border-[rgba(236,72,153,0.22)] bg-[color:var(--dawn-input)] text-[color:var(--dawn-text)] hover:border-rose-300/45 hover:bg-white hover:shadow-[0_4px_20px_rgba(244,114,182,0.12)]'
                 }`}
                 href="mailto:hrithikgh29@gmail.com"
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ delay: 0.06, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={reduced ? undefined : { y: -2 }}
               >
                 <span
@@ -520,16 +514,12 @@ export function Contact({ theme }: SectionProps) {
                 </span>
               </motion.a>
               <motion.a
-                className={`group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
+                className={`contact-link group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
                   isNight
                     ? 'border-white/[0.14] bg-black/35 text-parchment/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-white/20 hover:bg-black/45'
                     : 'border-[rgba(236,72,153,0.22)] bg-[color:var(--dawn-input)] text-[color:var(--dawn-text)] hover:border-rose-300/45 hover:bg-white hover:shadow-[0_4px_20px_rgba(244,114,182,0.12)]'
                 }`}
                 href="tel:+918420736098"
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ delay: 0.12, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={reduced ? undefined : { y: -2 }}
               >
                 <span
@@ -557,7 +547,7 @@ export function Contact({ theme }: SectionProps) {
                 </span>
               </motion.a>
               <motion.a
-                className={`group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
+                className={`contact-link group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
                   isNight
                     ? 'border-white/[0.14] bg-black/35 text-parchment/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-white/20 hover:bg-black/45'
                     : 'border-[rgba(236,72,153,0.22)] bg-[color:var(--dawn-input)] text-[color:var(--dawn-text)] hover:border-rose-300/45 hover:bg-white hover:shadow-[0_4px_20px_rgba(244,114,182,0.12)]'
@@ -565,10 +555,6 @@ export function Contact({ theme }: SectionProps) {
                 href="https://www.linkedin.com/in/hrithikgh29"
                 rel="noreferrer"
                 target="_blank"
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ delay: 0.18, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={reduced ? undefined : { y: -2 }}
               >
                 <span
@@ -590,7 +576,7 @@ export function Contact({ theme }: SectionProps) {
                 </span>
               </motion.a>
               <motion.a
-                className={`group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
+                className={`contact-link group inline-flex items-center gap-3 rounded-3xl border px-4 py-3 transition-all duration-300 active:scale-[0.98] ${
                   isNight
                     ? 'border-white/[0.14] bg-black/35 text-parchment/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-white/20 hover:bg-black/45'
                     : 'border-[rgba(236,72,153,0.22)] bg-[color:var(--dawn-input)] text-[color:var(--dawn-text)] hover:border-rose-300/45 hover:bg-white hover:shadow-[0_4px_20px_rgba(244,114,182,0.12)]'
@@ -598,10 +584,6 @@ export function Contact({ theme }: SectionProps) {
                 href="https://github.com/Hrithik373"
                 rel="noreferrer"
                 target="_blank"
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ delay: 0.24, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={reduced ? undefined : { y: -2 }}
               >
                 <span
@@ -625,7 +607,7 @@ export function Contact({ theme }: SectionProps) {
             </div>
           </div>
         </motion.div>
-      </motion.div>
+      </div>
       <ContactProgramCards theme={theme} inputClass={inputClass} isValidEmail={isValidEmail} />
     </SectionShell>
   )

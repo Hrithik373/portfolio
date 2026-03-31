@@ -15,6 +15,7 @@ import { Hero } from '../components/features/sections/Hero/Hero'
 import { Projects } from '../components/features/sections/Projects/Projects'
 import { Skills } from '../components/features/sections/Skills/Skills'
 import { useBlossomSound } from '../hooks/useBlossomSound'
+import { trackVisitor } from '../lib/visitor-tracker'
 
 function mixLin(a: number, b: number, t: number) {
   return a + (b - a) * t
@@ -64,6 +65,7 @@ export default function DesktopPortfolio() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    trackVisitor('desktop')
     const minimum = prefersReducedMotion ? 500 : 2200
     const timeout = window.setTimeout(() => setIsLoading(false), minimum)
     return () => window.clearTimeout(timeout)
@@ -204,7 +206,7 @@ export default function DesktopPortfolio() {
           <button
             type="button"
             onClick={() => setTheme(isNight ? 'day' : 'night')}
-            className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[0.68rem] font-medium tracking-[0.18em] uppercase shadow-soft-glow backdrop-blur-md transition-all ${
+            className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[0.68rem] font-medium tracking-[0.18em] uppercase shadow-soft-glow backdrop-blur-md transition-[background-color,border-color,box-shadow,color] ${
               isNight
                 ? 'border-white/20 bg-white/10 text-white/90 shadow-[0_0_18px_rgba(255,255,255,0.35)] hover:bg-white/15'
                 : 'border-pink-200/60 bg-white/70 text-[#4a3a44] shadow-[0_0_18px_rgba(255,182,193,0.45)] hover:bg-white/85'
@@ -219,7 +221,7 @@ export default function DesktopPortfolio() {
           <button
             type="button"
             onClick={() => setIsSoundOn((current) => !current)}
-            className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[0.68rem] font-medium tracking-[0.18em] uppercase shadow-soft-glow backdrop-blur-md transition-all ${
+            className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[0.68rem] font-medium tracking-[0.18em] uppercase shadow-soft-glow backdrop-blur-md transition-[background-color,border-color,box-shadow,color] ${
               isNight
                 ? 'border-white/20 bg-white/10 text-white/90 shadow-[0_0_18px_rgba(255,255,255,0.35)] hover:bg-white/15'
                 : 'border-pink-200/60 bg-white/70 text-[#4a3a44] shadow-[0_0_18px_rgba(255,182,193,0.45)] hover:bg-white/85'
@@ -301,7 +303,7 @@ export default function DesktopPortfolio() {
           transition={{ delay: 1.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className={`pointer-events-auto relative mt-3 flex items-center gap-5 overflow-visible rounded-full border px-5 ${
             isScrolled ? 'py-1.5' : 'py-2'
-          } text-xs sm:text-sm shadow-soft-glow backdrop-blur-md transition-all duration-300 ${
+          } text-xs sm:text-sm shadow-soft-glow backdrop-blur-md transition-[background-color,border-color,box-shadow,color] duration-300 ${
             isNight
               ? 'border-white/[0.14] bg-black/70 text-parchment/80'
               : 'border-[color:var(--dawn-card-border)] bg-[color:var(--dawn-nav)] text-[color:var(--dawn-text)]'

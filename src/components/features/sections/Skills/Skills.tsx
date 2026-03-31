@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { SectionShell } from '../SectionShell/SectionShell'
 import type { SectionProps } from '../SectionTypes'
 import { dayGlassSection, nightGlassSection } from '../sectionGlass'
+import { useScrollReveal } from '../../../../hooks/useScrollAnimation'
 
 type SkillGroup = {
   title: string
@@ -210,24 +211,12 @@ function SkillCard({
     }
   }, [inView, shimmerDone, index])
 
-  const row = Math.floor(index / 4)
-  const col = index % 4
-
   return (
-    <motion.div
+    <div
       ref={ref}
-      className={`group relative flex flex-col overflow-hidden px-5 py-5 lg:px-6 lg:py-6 ${
+      className={`skill-card group relative flex flex-col overflow-hidden px-5 py-5 lg:px-6 lg:py-6 ${
         isNight ? nightGlassSection : dayGlassSection
       }`}
-      initial={{ opacity: 0, scale: 0.88, filter: 'blur(8px)' }}
-      whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{
-        delay: row * 0.15 + col * 0.08,
-        duration: 0.7,
-        ease: easeBezier,
-      }}
-      whileHover={{ y: -4, transition: { duration: 0.3 } }}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -285,56 +274,58 @@ function SkillCard({
           >
             {group.title}
           </p>
-          <motion.span
+          <span
             className={`ml-auto rounded-full px-2 py-0.5 text-[0.55rem] font-medium ${
               isNight ? 'bg-white/5 text-parchment/40' : 'bg-black/5 text-[color:var(--dawn-muted)]'
             }`}
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: row * 0.15 + col * 0.08 + 0.4, duration: 0.4 }}
           >
             {group.items.length}
-          </motion.span>
+          </span>
         </div>
 
-        {/* Pills with wave-stagger + magnetic drift */}
+        {/* Pills with magnetic drift */}
         <div className="flex flex-wrap gap-1.5">
-          {group.items.map((item, ti) => {
-            const waveDelay =
-              row * 0.15 +
-              col * 0.08 +
-              0.3 +
-              Math.sin(ti * 0.8) * 0.06 +
-              ti * 0.045
-
-            return (
-              <motion.div
-                key={item.name}
-                initial={{ opacity: 0, y: 14, scale: 0.85 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: waveDelay, duration: 0.45, ease: easeBezier }}
-              >
-                <MagneticPill
-                  name={item.name}
-                  note={item.note}
-                  isNight={isNight}
-                  cursorX={cursorX}
-                  cursorY={cursorY}
-                  cardHovered={hovered}
-                />
-              </motion.div>
-            )
-          })}
+          {group.items.map((item) => (
+            <MagneticPill
+              key={item.name}
+              name={item.name}
+              note={item.note}
+              isNight={isNight}
+              cursorX={cursorX}
+              cursorY={cursorY}
+              cardHovered={hovered}
+            />
+          ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
 export function Skills({ theme }: SectionProps) {
   const isNight = theme === 'night'
+
+  const skillGridRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0, y: 30 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 85%',
+    children: '.skill-card',
+    stagger: 0.06,
+  })
+
+  const certsRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0, y: 24 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 85%',
+  })
+
+  const certCardsRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0, y: 20 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 85%',
+    children: '.cert-card',
+    stagger: 0.12,
+  })
 
   return (
     <SectionShell
@@ -345,49 +336,42 @@ export function Skills({ theme }: SectionProps) {
       backgroundVideo="https://motionbgs.com/dl/hd/36"
     >
       {/* Skill grid */}
-      <div className="grid min-w-0 gap-5 sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:grid-cols-[repeat(3,minmax(0,1fr))] xl:grid-cols-[repeat(4,minmax(0,1fr))] lg:gap-6">
+      <div
+        ref={skillGridRef}
+        className="grid min-w-0 gap-5 sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:grid-cols-[repeat(3,minmax(0,1fr))] xl:grid-cols-[repeat(4,minmax(0,1fr))] lg:gap-6"
+      >
         {skillGroups.map((group, i) => (
           <SkillCard key={group.title} group={group} index={i} isNight={isNight} />
         ))}
       </div>
 
       {/* Certifications */}
-      <motion.div
-        className="mt-12"
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.8, ease: easeBezier }}
-      >
-        <motion.h3
+      <div ref={certsRef} className="mt-12">
+        <h3
           className={`mb-5 flex items-center gap-2 font-heading text-base ${
             isNight ? 'text-parchment/90' : 'text-[color:var(--dawn-text)]'
           }`}
-          initial={{ opacity: 0, x: -12 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: easeBezier }}
         >
           <span className="text-sm">🎓</span>
           Certifications
-        </motion.h3>
+        </h3>
 
-        <div className="grid min-w-0 gap-4 sm:grid-cols-[repeat(3,minmax(0,1fr))]">
+        <div
+          ref={certCardsRef}
+          className="grid min-w-0 gap-4 sm:grid-cols-[repeat(3,minmax(0,1fr))]"
+        >
           {certifications.map((cert, ci) => (
             <motion.div
               key={cert.title}
-              className={`group relative overflow-hidden px-5 py-4 ${
+              className={`cert-card group relative overflow-hidden px-5 py-4 ${
                 isNight ? nightGlassSection : dayGlassSection
               }`}
-              initial={{ opacity: 0, y: 20, rotateX: 12 }}
-              whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
               whileHover={{
                 y: -3,
                 boxShadow: isNight
                   ? '0 0 40px rgba(245,198,214,0.12)'
                   : '0 0 30px var(--dawn-shadow)',
               }}
-              viewport={{ once: true }}
               transition={{ delay: ci * 0.12, duration: 0.7, ease: easeBezier }}
               style={{ transformPerspective: 600 }}
             >
@@ -411,24 +395,20 @@ export function Skills({ theme }: SectionProps) {
                 >
                   {cert.title}
                 </p>
-                <motion.span
+                <span
                   className={`mt-2 inline-block rounded-full border px-2.5 py-0.5 text-[0.6rem] tracking-wide ${
                     isNight
                       ? 'border-sakura-pink/20 bg-sakura-pink/8 text-sakura-pink/80'
                       : 'border-[rgba(245,198,214,0.3)] bg-white/80 text-[color:var(--dawn-muted)]'
                   }`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: ci * 0.12 + 0.3, duration: 0.4, ease: easeBezier }}
                 >
                   {cert.badge}
-                </motion.span>
+                </span>
               </div>
             </motion.div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </SectionShell>
   )
 }

@@ -13,9 +13,11 @@
     "test:voice-note": "tsx backend/scripts/smoke-voice-note.ts",
     "test:api": "tsx backend/scripts/smoke-voice-note.ts",
     "test:transcribe": "tsx backend/scripts/smoke-transcribe-preview.ts",
+    "test:visitor": "tsx backend/scripts/smoke-visitor-tracking.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "vite build",
+    "start:server": "node --import tsx/esm backend/server.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

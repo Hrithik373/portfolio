@@ -1,5 +1,7 @@
 import { AnimatePresence, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion'
-import { type FormEvent, useCallback, useRef, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { gsap, ScrollTrigger } from '../../../../lib/gsap-setup'
+import { useScrollReveal } from '../../../../hooks/useScrollAnimation'
 
 import { apiUrl } from '../../../../config/apiBase'
 import { FloatingCardPetals } from '../../petals/FloatingCardPetals'
@@ -10,6 +12,24 @@ import { dayGlassSection, nightGlassSection } from '../sectionGlass'
 import { collectFingerprint } from '../../../../lib/fingerprint'
 
 export type BlogPostProps = SectionProps & { embedded?: boolean }
+
+/** Ink line that grows on scroll — replaces whileInView scaleX animation */
+function BlogInkLine({ className, delay = 0 }: { className: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    gsap.set(el, { scaleX: 0, transformOrigin: 'left center' })
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: 'top 90%',
+      once: true,
+      onEnter: () => gsap.to(el, { scaleX: 1, duration: 1.1, delay, ease: 'power3.inOut' }),
+    })
+    return () => st.kill()
+  }, [delay])
+  return <div ref={ref} className={className} />
+}
 
 const ease = [0.22, 1, 0.36, 1] as const
 const softLoop = [0.45, 0, 0.55, 1] as const
@@ -331,6 +351,7 @@ export function BlogPost({ theme, embedded = false }: BlogPostProps) {
   const isNight = theme === 'night'
   const reduced = useReducedMotion() ?? false
   const rootRef = useRef<HTMLDivElement>(null)
+  const roadmapHeadRef = useScrollReveal<HTMLDivElement>({ from: { opacity: 0, y: 16 }, to: { opacity: 1, y: 0 }, start: 'top 88%' })
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef(0)
@@ -432,8 +453,7 @@ export function BlogPost({ theme, embedded = false }: BlogPostProps) {
 
       {/* 3 — Roadmap grid */}
       <div>
-        <motion.div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4"
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.6, ease }}>
+        <div ref={roadmapHeadRef} className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
           <div>
             <p className={labelCaps}>Roadmap</p>
             <p className={`mt-1 font-heading text-lg sm:text-xl ${strongClass}`}>
@@ -441,7 +461,7 @@ export function BlogPost({ theme, embedded = false }: BlogPostProps) {
             </p>
           </div>
           <p className={`text-xs ${mutedClass}`}>Shipped entries will link from here as they go live.</p>
-        </motion.div>
+        </div>
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {upcomingItems.map((item, i) => (
             <BlogCard key={item.title} isNight={isNight} reduced={reduced} dense index={2 + i} className="flex h-full flex-col p-5 sm:p-6">
@@ -460,12 +480,9 @@ export function BlogPost({ theme, embedded = false }: BlogPostProps) {
               <p className={`font-heading text-base ${strongClass}`}>{item.title}</p>
               <p className={`mt-2 flex-1 text-xs leading-relaxed sm:text-sm ${mutedClass}`}>{item.detail}</p>
               {/* Animated ink line instead of static bar */}
-              <motion.div
+              <BlogInkLine
                 className={`mt-4 h-0.5 origin-left rounded-full ${isNight ? 'bg-gradient-to-r from-sakura-pink/40 to-violet-400/20' : 'bg-gradient-to-r from-rose-300/60 to-amber-200/40'}`}
-                initial={{ scaleX: 0 }}
-                whileInView={{ scaleX: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 + i * 0.12, duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
+                delay={0.3 + i * 0.12}
               />
             </BlogCard>
           ))}

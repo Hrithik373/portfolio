@@ -181,8 +181,7 @@ export function Hero({ theme }: SectionProps) {
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
             className={`space-y-4 border-t pt-8 ${isNight ? 'border-white/10' : 'border-[color:var(--dawn-card-border)]'}`}
           >

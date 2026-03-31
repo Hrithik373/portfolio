@@ -1,4 +1,6 @@
 import 'dotenv/config'
+import fs from 'fs'
+import path from 'path'
 import express from 'express'
 
 import { applySecurity } from './security'
@@ -24,6 +26,148 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/admin', abuseAdminRouter)
 app.use('/api/admin/cache', cacheAdminRouter)
 app.use('/api/admin/devices', deviceIntelAdminRouter)
+
+type VisitorRecord = {
+  ip: string
+  userAgent: string
+  page: string
+  referrer: string
+  url: string
+  screenWidth: number
+  screenHeight: number
+  language: string
+  timestamp: string
+  fingerprint: { deviceId?: string; webgl?: { renderer?: string }; timezone?: { timezone?: string }; hardware?: { cores?: number; memory?: number } } | null
+}
+
+type DeviceEntry = {
+  deviceId: string | null
+  ip: string
+  ips: string[]
+  userAgent: string
+  gpu: string
+  screen: string
+  language: string
+  timezone: string
+  hardware: string
+  pages: { page: string; url: string; referrer: string; time: string }[]
+  visits: number
+  firstSeen: string
+  lastSeen: string
+}
+
+const VISITOR_FILE = path.join(process.cwd(), 'data', 'visitors.json')
+const DATA_DIR = path.join(process.cwd(), 'data')
+
+function readVisitors(): VisitorRecord[] {
+  try {
+    if (fs.existsSync(VISITOR_FILE)) {
+      return JSON.parse(fs.readFileSync(VISITOR_FILE, 'utf-8')) as VisitorRecord[]
+    }
+  } catch { /* ignore */ }
+  return []
+}
+
+/* ── Visitor tracking — no auth, silent fail ── */
+app.post('/api/visitor', express.json({ limit: '10kb' }), (req, res) => {
+  try {
+    const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown'
+    const ua = req.headers['user-agent'] ?? ''
+    const { _fp, page, referrer, url, screenWidth, screenHeight, language, timestamp } = req.body as {
+      _fp?: VisitorRecord['fingerprint']
+      page?: string
+      referrer?: string
+      url?: string
+      screenWidth?: number
+      screenHeight?: number
+      language?: string
+      timestamp?: string
+    }
+
+    const record: VisitorRecord = {
+      ip,
+      userAgent: ua,
+      page: page ?? 'unknown',
+      referrer: referrer ?? 'direct',
+      url: url ?? '',
+      screenWidth: screenWidth ?? 0,
+      screenHeight: screenHeight ?? 0,
+      language: language ?? '',
+      timestamp: timestamp ?? new Date().toISOString(),
+      fingerprint: _fp ?? null,
+    }
+
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
+    let visitors = readVisitors()
+    visitors.push(record)
+    if (visitors.length > 1000) visitors = visitors.slice(-1000)
+    fs.writeFileSync(VISITOR_FILE, JSON.stringify(visitors, null, 2), 'utf-8')
+
+    console.log(`[Visitor] ${record.page} | IP: ${ip} | Device: ${record.fingerprint?.deviceId?.slice(0, 12) ?? 'no-fp'}... | ${ua.slice(0, 50)}`)
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('[Visitor] Error:', err)
+    res.json({ ok: true })
+  }
+})
+
+/* ── Visitor admin — requires Bearer auth ── */
+app.get('/api/admin/visitors', (req, res) => {
+  const auth = req.headers.authorization
+  const ADMIN_PASSWORD = process.env.ABUSE_ADMIN_PASSWORD ?? 'changeme-in-env'
+  if (!auth || auth !== `Bearer ${ADMIN_PASSWORD}`) {
+    res.status(401).json({ error: 'Unauthorized' })
+    return
+  }
+
+  const visitors = readVisitors()
+  const uniqueIPs = new Set(visitors.map((v) => v.ip))
+  const uniqueDevices = new Set(visitors.filter((v) => v.fingerprint?.deviceId).map((v) => v.fingerprint!.deviceId))
+  const desktopCount = visitors.filter((v) => v.page === 'desktop').length
+  const mobileCount = visitors.filter((v) => v.page === 'mobile').length
+
+  const deviceMap: Record<string, DeviceEntry> = {}
+  for (const v of visitors) {
+    const did = v.fingerprint?.deviceId ?? `ip_${v.ip}`
+    if (!deviceMap[did]) {
+      deviceMap[did] = {
+        deviceId: v.fingerprint?.deviceId ?? null,
+        ip: v.ip,
+        ips: [v.ip],
+        userAgent: v.userAgent,
+        gpu: v.fingerprint?.webgl?.renderer ?? 'unknown',
+        screen: `${v.screenWidth}x${v.screenHeight}`,
+        language: v.language,
+        timezone: v.fingerprint?.timezone?.timezone ?? 'unknown',
+        hardware: v.fingerprint?.hardware
+          ? `${v.fingerprint.hardware.cores ?? '?'}c|${v.fingerprint.hardware.memory ?? '?'}gb`
+          : 'unknown',
+        pages: [],
+        visits: 0,
+        firstSeen: v.timestamp,
+        lastSeen: v.timestamp,
+      }
+    }
+    const d = deviceMap[did]
+    d.visits++
+    d.lastSeen = v.timestamp
+    if (!d.ips.includes(v.ip)) d.ips.push(v.ip)
+    d.pages.push({ page: v.page, url: v.url, referrer: v.referrer, time: v.timestamp })
+    if (d.pages.length > 20) d.pages = d.pages.slice(-20)
+  }
+
+  res.json({
+    summary: {
+      totalVisits: visitors.length,
+      uniqueIPs: uniqueIPs.size,
+      uniqueDevices: uniqueDevices.size,
+      desktopVisits: desktopCount,
+      mobileVisits: mobileCount,
+    },
+    devices: Object.values(deviceMap).sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime()),
+    recentVisitors: visitors.slice(-30).reverse(),
+  })
+})
 
 /* ── Cache middleware — tracks IP reputation on every request ── */
 app.use(cacheMiddleware)

@@ -1,5 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { type FormEvent, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { ScrollTrigger } from '../../../../lib/gsap-setup'
+import { useScrollReveal } from '../../../../hooks/useScrollAnimation'
 
 import { apiUrl } from '../../../../config/apiBase'
 import { Field } from '../Field/Field'
@@ -121,6 +123,21 @@ export function ContactProgramCards({ theme, inputClass, isValidEmail }: Props) 
   const [assistantToast, setAssistantToast] = useState<ToastState>(null)
   const adminToastTimerRef = useRef(0)
   const assistantToastTimerRef = useRef(0)
+  const [cardsInView, setCardsInView] = useState(false)
+  const gridRef = useRef<HTMLDivElement>(null)
+  const listRef = useScrollReveal<HTMLOListElement>({ children: 'li', stagger: 0.08, from: { opacity: 0, x: -10 }, to: { opacity: 1, x: 0 } })
+
+  useEffect(() => {
+    const el = gridRef.current
+    if (!el) return
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: 'top 85%',
+      once: true,
+      onEnter: () => setCardsInView(true),
+    })
+    return () => st.kill()
+  }, [])
 
   const showCardToast = (card: 'admin' | 'assistant', type: ToastType, message: string) => {
     if (card === 'admin') {
@@ -252,11 +269,11 @@ export function ContactProgramCards({ theme, inputClass, isValidEmail }: Props) 
 
   return (
     <motion.div
+      ref={gridRef}
       className="mt-10 grid min-w-0 gap-6 lg:mt-14 lg:grid-cols-[repeat(3,minmax(0,1fr))]"
       variants={container}
       initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 'some', margin: '0px 0px 180px 0px' }}
+      animate={cardsInView ? 'show' : 'hidden'}
     >
       <motion.p
         variants={item}
@@ -390,20 +407,16 @@ export function ContactProgramCards({ theme, inputClass, isValidEmail }: Props) 
                 </span>
               </motion.div>
             </div>
-            <ol className={`mt-4 space-y-3 ${bodyClass} list-none`}>
+            <ol ref={listRef} className={`mt-4 space-y-3 ${bodyClass} list-none`}>
               {[
                 'Each submission creates a unique petal instance (ID + variant) on the server.',
                 'Your note is delivered to the owner inbox through the portfolio SMTP identity — the same bot address that sends acknowledgements.',
                 'You receive an automatic reply from Cherry Blossom Petal Bot with a short quote block and reference lines so threads stay traceable.',
                 'The 12-hour limit applies only to general contact; admin and assistant forms on this page use separate cooldowns.',
               ].map((text, i) => (
-                <motion.li
+                <li
                   key={i}
                   className="flex gap-3"
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 'some' }}
-                  transition={{ delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <span
                     className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[0.65rem] font-semibold ${
@@ -413,7 +426,7 @@ export function ContactProgramCards({ theme, inputClass, isValidEmail }: Props) 
                     {i + 1}
                   </span>
                   <span>{text}</span>
-                </motion.li>
+                </li>
               ))}
             </ol>
           </div>

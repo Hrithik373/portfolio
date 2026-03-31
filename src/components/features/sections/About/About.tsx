@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   motion,
   useInView,
@@ -10,6 +10,8 @@ import {
 
 import { SectionShell } from '../SectionShell/SectionShell'
 import type { SectionProps } from '../SectionTypes'
+import { useScrollReveal, useLineReveal } from '../../../../hooks/useScrollAnimation'
+import { gsap, ScrollTrigger } from '../../../../lib/gsap-setup'
 
 const ease = [0.22, 1, 0.36, 1] as const
 const pink = 'rgba(245,198,214'
@@ -151,49 +153,56 @@ function DojoCard({
   )
 }
 
-function ScrollRevealParagraph({ text, delay, isNight }: { text: string; delay: number; isNight: boolean }) {
-  const hidden = isNight ? { opacity: 0.14, y: 5 } : { opacity: 0.32, y: 3 }
+function ScrollRevealParagraph({ text, isNight }: { text: string; delay: number; isNight: boolean }) {
+  const ref = useScrollReveal<HTMLParagraphElement>({
+    from: { opacity: 0, y: 8 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 88%',
+  })
   return (
-    <p className="leading-relaxed">
-      {text.split(' ').map((word, wi) => (
-        <motion.span
-          key={wi}
-          className="inline-block"
-          style={
-            !isNight
-              ? { textShadow: '0 0 20px rgba(245,198,214,0.35), 0 1px 0 rgba(255,255,255,0.5)' }
-              : undefined
-          }
-          initial={hidden}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-12% 0px' }}
-          transition={{ delay: delay + wi * 0.01, duration: 0.42, ease }}
-        >
-          {word}&nbsp;
-        </motion.span>
-      ))}
+    <p
+      ref={ref}
+      className="leading-relaxed"
+      style={
+        !isNight
+          ? { textShadow: '0 0 20px rgba(245,198,214,0.35), 0 1px 0 rgba(255,255,255,0.5)' }
+          : undefined
+      }
+    >
+      {text}
     </p>
   )
 }
 
 function FloatingEnso({ isNight }: { isNight: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
+  const circleRef = useRef<SVGCircleElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
   const rotate = useTransform(scrollYProgress, [0, 1], [0, 180])
   const springRotate = useSpring(rotate, { stiffness: 42, damping: 22 })
 
+  useEffect(() => {
+    const circle = circleRef.current
+    if (!circle) return
+    gsap.set(circle, { strokeDashoffset: 500 })
+    const st = ScrollTrigger.create({
+      trigger: circle,
+      start: 'top 85%',
+      once: true,
+      onEnter: () => gsap.to(circle, { strokeDashoffset: 0, duration: 2.2, ease: 'power2.inOut' }),
+    })
+    return () => st.kill()
+  }, [])
+
   return (
     <div ref={ref} className="pointer-events-none absolute -right-8 -top-8 z-0 h-40 w-40 lg:-right-12 lg:-top-12 lg:h-56 lg:w-56">
       <motion.svg viewBox="0 0 200 200" className="h-full w-full drop-shadow-[0_0_20px_rgba(245,198,214,0.25)]" style={{ rotate: springRotate }}>
-        <motion.circle
+        <circle
+          ref={circleRef}
           cx="100" cy="100" r="80" fill="none"
           stroke={isNight ? 'rgba(245,198,214,0.08)' : 'rgba(236,72,153,0.22)'}
           strokeWidth={isNight ? '6' : '7'}
           strokeLinecap="round" strokeDasharray="440 60"
-          initial={{ strokeDashoffset: 500 }}
-          whileInView={{ strokeDashoffset: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 2.2, ease: 'easeInOut' }}
         />
       </motion.svg>
     </div>
@@ -208,40 +217,44 @@ export function About({ theme }: SectionProps) {
   const bodyClass = isNight ? 'text-parchment/70' : 'text-[color:var(--dawn-muted)]'
   const primaryClass = isNight ? 'text-parchment/90' : 'text-[color:var(--dawn-text)]'
 
+  const gridRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+    start: 'top 90%',
+  })
+  const lineRef = useLineReveal<HTMLDivElement>()
+  const quoteRef = useScrollReveal<HTMLParagraphElement>({ from: { opacity: 0 }, to: { opacity: 1 }, start: 'top 88%' })
+  const focusHeadingRef = useScrollReveal<HTMLParagraphElement>({ from: { opacity: 0 }, to: { opacity: 1 }, start: 'top 88%' })
+  const focusListRef = useScrollReveal<HTMLUListElement>({ from: { opacity: 0, x: -16 }, to: { opacity: 1, x: 0 }, start: 'top 88%', children: 'li', stagger: 0.12 })
+  const kanjiWatermarkBioRef = useScrollReveal<HTMLSpanElement>({ from: { opacity: 0, scale: 0.8 }, to: { opacity: 1, scale: 1 }, start: 'top 88%' })
+  const titleStripRef = useScrollReveal<HTMLDivElement>({ from: { opacity: 0, x: -20 }, to: { opacity: 1, x: 0 }, start: 'top 88%' })
+  const kanjiWatermarkFocusRef = useScrollReveal<HTMLSpanElement>({ from: { opacity: 0, scale: 0.8 }, to: { opacity: 1, scale: 1 }, start: 'top 88%' })
+
   return (
     <SectionShell id="about" label="About" eyebrow="Story" theme={theme} backgroundVideo="https://motionbgs.com/dl/hd/36">
       <div className="relative">
         <FloatingEnso isNight={isNight} />
 
-        <motion.div
+        <div
+          ref={gridRef}
           className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-8"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ amount: 0.2 }}
-          transition={{ duration: 0.6 }}
         >
           {/* Bio card */}
           <DojoCard isNight={isNight} delay={0}>
             <div className="relative p-6 lg:p-8">
               {/* Kanji watermark */}
-              <motion.span
+              <span
+                ref={kanjiWatermarkBioRef}
                 className={`pointer-events-none absolute -right-2 -top-4 select-none font-jp-hand text-[8rem] leading-none ${
                   isNight ? 'text-sakura-pink/[0.05]' : 'text-rose-400/[0.14]'
                 }`}
-                initial={{ opacity: 0, scale: 0.8, rotate: -8 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.5, ease }}
                 aria-hidden="true"
-              >道</motion.span>
+              >道</span>
 
               {/* Title strip */}
-              <motion.div
+              <div
+                ref={titleStripRef}
                 className="mb-5 flex items-center gap-3"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2, duration: 0.7, ease }}
               >
                 <motion.span
                   className={`font-jp-hand text-2xl ${isNight ? 'text-sakura-pink/70' : 'text-rose-500/90'}`}
@@ -257,7 +270,7 @@ export function About({ theme }: SectionProps) {
                     4+ years · Backend · AI · ML
                   </p>
                 </div>
-              </motion.div>
+              </div>
 
               <div className={`space-y-4 text-sm ${bodyClass}`}>
                 <ScrollRevealParagraph
@@ -278,64 +291,48 @@ export function About({ theme }: SectionProps) {
               </div>
 
               {/* Bottom ink separator */}
-              <motion.div
+              <div
+                ref={lineRef}
                 className="mt-6 h-px"
                 style={{
                   background: isNight
                     ? `linear-gradient(90deg, ${pinkLine} 0%, ${pink},0.15) 60%, transparent 100%)`
                     : 'linear-gradient(90deg, rgba(236,72,153,0.45) 0%, rgba(245,198,214,0.35) 55%, transparent 100%)',
                 }}
-                initial={{ scaleX: 0, originX: 0 }}
-                whileInView={{ scaleX: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 1.2, duration: 1, ease }}
               />
-              <motion.p
+              <p
+                ref={quoteRef}
                 className={`mt-3 font-jp-hand text-sm tracking-wider ${isNight ? 'text-sakura-pink/40' : 'text-rose-600/75'}`}
                 style={!isNight ? { textShadow: '0 0 16px rgba(245,198,214,0.35)' } : undefined}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 1.5, duration: 1 }}
               >
                 一期一会 — One encounter, one chance
-              </motion.p>
+              </p>
             </div>
           </DojoCard>
 
           {/* Focus card */}
           <DojoCard isNight={isNight} delay={0.2}>
             <div className="relative p-5 lg:p-6">
-              <motion.span
+              <span
+                ref={kanjiWatermarkFocusRef}
                 className={`pointer-events-none absolute -right-2 -top-4 select-none font-jp-hand text-[8rem] leading-none ${
                   isNight ? 'text-sakura-pink/[0.05]' : 'text-rose-400/[0.14]'
                 }`}
-                initial={{ opacity: 0, scale: 0.8, rotate: -8 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.5, ease }}
                 aria-hidden="true"
-              >技</motion.span>
+              >技</span>
 
-              <motion.p
+              <p
+                ref={focusHeadingRef}
                 className={`mb-4 font-heading text-[0.8rem] uppercase tracking-[0.22em] ${headingClass}`}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.4, duration: 0.6 }}
               >
                 Current Focus
-              </motion.p>
+              </p>
 
-              <ul className="space-y-4">
-                {focusItems.map((item, i) => (
-                  <motion.li
+              <ul ref={focusListRef} className="space-y-4">
+                {focusItems.map((item) => (
+                  <li
                     key={item.kanji}
                     className="flex items-start gap-3"
-                    initial={{ opacity: 0, x: -16 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.3 + i * 0.12, duration: 0.6, ease }}
                   >
                     <motion.span
                       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-jp-hand text-lg"
@@ -353,27 +350,26 @@ export function About({ theme }: SectionProps) {
                       <p className={`text-xs font-medium ${primaryClass}`}>{item.label}</p>
                       <p className={`mt-0.5 text-[0.7rem] leading-snug ${mutedClass}`}>{item.desc}</p>
                     </div>
-                  </motion.li>
+                  </li>
                 ))}
               </ul>
 
-              {/* Bamboo strokes */}
+              {/* Bamboo strokes — static, inside DojoCard which animates on entrance */}
               <div className="pointer-events-none absolute bottom-4 right-4 flex gap-1.5" aria-hidden="true">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
+                {[32, 44, 56].map((h, i) => (
+                  <div
                     key={i}
                     className={`w-px rounded-full ${isNight ? 'bg-sakura-pink/18' : 'bg-rose-400/35'}`}
-                    style={!isNight ? { boxShadow: '0 0 8px rgba(245,198,214,0.35)' } : undefined}
-                    initial={{ height: 0 }}
-                    whileInView={{ height: [0, 32 + i * 12] }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.8 + i * 0.15, duration: 0.8, ease }}
+                    style={{
+                      height: h,
+                      ...((!isNight) ? { boxShadow: '0 0 8px rgba(245,198,214,0.35)' } : {}),
+                    }}
                   />
                 ))}
               </div>
             </div>
           </DojoCard>
-        </motion.div>
+        </div>
       </div>
     </SectionShell>
   )

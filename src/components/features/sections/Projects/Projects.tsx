@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { SectionShell } from '../SectionShell/SectionShell'
 import type { SectionProps } from '../SectionTypes'
 import { dayGlassSection, nightGlassSection } from '../sectionGlass'
+import { useScrollReveal } from '../../../../hooks/useScrollAnimation'
 
 type Project = {
   title: string
@@ -97,7 +98,7 @@ function TiltCard({
   index: number
   isNight: boolean
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLElement>(null)
   const [hovered, setHovered] = useState(false)
 
   const x = useMotionValue(0)
@@ -124,17 +125,14 @@ function TiltCard({
   return (
     <motion.article
       ref={ref}
-      className={`group relative flex h-full flex-col overflow-hidden p-6 lg:p-7 ${
+      className={`project-card group relative flex h-full flex-col overflow-hidden p-6 lg:p-7 ${
         isFeatured ? 'sm:col-span-2' : ''
       } ${isNight ? nightGlassSection : dayGlassSection}`}
       style={{ rotateX, rotateY, transformPerspective: 800, transformStyle: 'preserve-3d' }}
-      initial={{ opacity: 0, y: 40, scale: 0.96 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ amount: 0.2, once: true }}
-      transition={{ delay: index * 0.1, duration: 0.8, ease: easeBezier }}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={handleMouseLeave}
+      whileHover={{ y: -3, transition: { duration: 0.3 } }}
     >
       {/* Hover glow */}
       <motion.div
@@ -146,29 +144,19 @@ function TiltCard({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,_rgba(139,47,60,0.12),_transparent_50%)]" />
       </motion.div>
 
-      {/* Animated top accent line */}
-      <motion.div
+      {/* Top accent line — static, rendered once card enters (GSAP parent handles entrance) */}
+      <div
         className="absolute inset-x-0 top-0 h-px"
         style={{
           background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.55), transparent)',
         }}
-        initial={{ scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: index * 0.1 + 0.3, duration: 0.8, ease: easeBezier }}
       />
 
       <div className="relative z-10 flex flex-1 flex-col">
         <header className="mb-3 space-y-1.5">
-          <motion.p
-            className="text-[0.65rem] uppercase tracking-[0.25em] text-sakura-pink/80"
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.1 + 0.15, duration: 0.6, ease: easeBezier }}
-          >
+          <p className="text-[0.65rem] uppercase tracking-[0.25em] text-sakura-pink/80">
             {project.role}
-          </motion.p>
+          </p>
           <h3
             className={`font-heading text-lg ${
               isNight ? 'text-parchment/95' : 'text-[color:var(--dawn-text)]'
@@ -186,21 +174,17 @@ function TiltCard({
           {project.description}
         </p>
 
-        {/* Tech stack with staggered entrance */}
+        {/* Tech stack */}
         <div className={`mb-5 flex flex-wrap gap-2 text-[0.66rem] ${isNight ? 'text-parchment/55' : 'text-[color:var(--dawn-muted)]'}`}>
-          {project.stack.map((tech, ti) => (
-            <motion.span
+          {project.stack.map((tech) => (
+            <span
               key={tech}
               className={`rounded-full border px-2.5 py-1 tracking-wide ${
                 isNight ? 'border-white/12 bg-white/[0.04]' : 'border-[rgba(245,198,214,0.32)] bg-white/70'
               }`}
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 + 0.3 + ti * 0.05, duration: 0.4, ease: easeBezier }}
             >
               {tech}
-            </motion.span>
+            </span>
           ))}
         </div>
 
@@ -251,6 +235,14 @@ function TiltCard({
 export function Projects({ theme }: SectionProps) {
   const isNight = theme === 'night'
 
+  const gridRef = useScrollReveal<HTMLDivElement>({
+    from: { opacity: 0, y: 40 },
+    to: { opacity: 1, y: 0 },
+    start: 'top 85%',
+    children: '.project-card',
+    stagger: 0.1,
+  })
+
   return (
     <SectionShell
       id="projects"
@@ -259,7 +251,7 @@ export function Projects({ theme }: SectionProps) {
       theme={theme}
       backgroundVideo="https://motionbgs.com/dl/hd/36"
     >
-      <div className="grid min-w-0 gap-6 sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:gap-8">
+      <div ref={gridRef} className="grid min-w-0 gap-6 sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:gap-8">
         {projects.map((project, index) => (
           <TiltCard key={project.title} project={project} index={index} isNight={isNight} />
         ))}

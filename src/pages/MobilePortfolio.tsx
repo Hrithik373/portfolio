@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { useScrollReveal } from '../hooks/useScrollAnimation'
+import { trackVisitor } from '../lib/visitor-tracker'
 
 import { apiUrl } from '../config/apiBase'
 import { MidnightScrollBackground } from '../components/features/backgrounds/MidnightScrollBackground'
@@ -119,6 +121,7 @@ export default function MobilePortfolio() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' })
+    trackVisitor('mobile')
     const t = window.setTimeout(() => setShowLoader(false), 1200)
     return () => window.clearTimeout(t)
   }, [])
@@ -144,6 +147,12 @@ export default function MobilePortfolio() {
     () => !isNight ? ({ background: 'linear-gradient(180deg, var(--dawn-bg-from), var(--dawn-bg-to))' } as React.CSSProperties) : undefined,
     [isNight],
   )
+
+  const skillsRef = useScrollReveal<HTMLDivElement>({ children: '.m-skill-card', stagger: 0.06, from: { opacity: 0, y: 18, scale: 0.97 }, to: { opacity: 1, y: 0, scale: 1 } })
+  const certsRef = useScrollReveal<HTMLDivElement>({ children: '.m-cert-card', stagger: 0.08, from: { opacity: 0, y: 12 }, to: { opacity: 1, y: 0 } })
+  const projectsRef = useScrollReveal<HTMLDivElement>({ children: '.m-project-card', stagger: 0.08, from: { opacity: 0, y: 24, scale: 0.97 }, to: { opacity: 1, y: 0, scale: 1 } })
+  const expRef = useScrollReveal<HTMLDivElement>({ children: '.m-exp-card', stagger: 0.08, from: { opacity: 0, y: 16 }, to: { opacity: 1, y: 0 } })
+  const footerRef = useScrollReveal<HTMLElement>({ from: { opacity: 0 }, to: { opacity: 1 } })
 
   return (
     <div
@@ -247,7 +256,7 @@ export default function MobilePortfolio() {
         <MobileSection id="m-about" eyebrow="Story" title="About" showPetals theme={theme}>
           <div className={`${card} relative overflow-hidden space-y-3 text-sm leading-relaxed text-parchment/75`}>
             <span className="pointer-events-none absolute -right-2 -top-3 select-none font-jp-hand text-[6rem] leading-none text-white/[0.02]" aria-hidden>道</span>
-            <motion.div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.5), transparent)' }} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 1, ease }} />
+            <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.5), transparent)' }} />
             <div className="mb-3 flex items-center gap-2"><span className={`font-jp-hand text-xl ${pink}`}>士</span><div><p className={`font-heading text-[0.7rem] uppercase tracking-[0.2em] ${pink}`}>The Engineer</p><p className={`text-[0.55rem] tracking-wider ${muted}`}>4+ years · Backend · AI · ML</p></div></div>
             <p>Software Engineer with 4+ years of experience in backend systems, scalable product engineering, and AI-driven solution development.</p>
             <p>Through work with ITU, expanded into applied AI and healthcare-focused intelligent systems — architecting RAG pipelines, semantic caching strategies, multimodal voice-and-text systems.</p>
@@ -255,50 +264,50 @@ export default function MobilePortfolio() {
             <p className={`font-jp-hand text-xs tracking-wider ${pink} pt-1`}>一期一会 — One encounter, one chance</p>
           </div>
           <div className={`${card} relative overflow-hidden mt-4 space-y-3`}>
-            <motion.div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.5), transparent)' }} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ delay: 0.2, duration: 1, ease }} />
+            <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.5), transparent)' }} />
             <p className={`font-heading text-[0.8rem] uppercase tracking-[0.18em] ${pink}`}>Current focus</p>
             <ul className="space-y-3 text-xs text-parchment/80">
-              {[{ kanji: '検', label: 'RAG Systems & Evaluation', desc: 'Grounded answers, safety checks, and measurable AI quality.' }, { kanji: '声', label: 'Voice + Multilingual AI', desc: 'STT/TTS + translation for inclusive healthcare access.' }, { kanji: '築', label: 'Scalable Architecture', desc: 'Backend systems, caching strategies, and production-grade pipelines.' }, { kanji: '学', label: 'Continuous Learning', desc: "Pursuing a Master's in AI & Data Science — always growing." }].map((item, i) => (
-                <motion.li key={item.kanji} className="flex items-start gap-2.5" initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease }}>
+              {[{ kanji: '検', label: 'RAG Systems & Evaluation', desc: 'Grounded answers, safety checks, and measurable AI quality.' }, { kanji: '声', label: 'Voice + Multilingual AI', desc: 'STT/TTS + translation for inclusive healthcare access.' }, { kanji: '築', label: 'Scalable Architecture', desc: 'Backend systems, caching strategies, and production-grade pipelines.' }, { kanji: '学', label: 'Continuous Learning', desc: "Pursuing a Master's in AI & Data Science — always growing." }].map((item) => (
+                <li key={item.kanji} className="flex items-start gap-2.5">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-sakura-pink/20 bg-sakura-pink/[0.06] font-jp-hand text-sm text-sakura-pink/80">{item.kanji}</span>
                   <div><p className="font-medium text-parchment/90">{item.label}</p><p className={muted}>{item.desc}</p></div>
-                </motion.li>
+                </li>
               ))}
             </ul>
           </div>
         </MobileSection>
 
         <MobileSection id="m-skills" eyebrow="Dojo" title="Skills & Certifications" theme={theme}>
-          <div className="space-y-4">
-            {skillGroups.map((group, gi) => (
-              <motion.div key={group.title} className={`${card} relative overflow-hidden`} initial={{ opacity: 0, y: 18, scale: 0.97 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: gi * 0.05, duration: 0.6, ease }}>
-                <motion.div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.45), transparent)' }} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ delay: gi * 0.05 + 0.15, duration: 0.6, ease }} />
+          <div ref={skillsRef} className="space-y-4">
+            {skillGroups.map((group) => (
+              <div key={group.title} className={`m-skill-card ${card} relative overflow-hidden`}>
+                <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.45), transparent)' }} />
                 <div className="mb-3 flex items-center gap-2"><span className="text-sm">{group.icon}</span><p className="font-heading text-sm text-parchment/90">{group.title}</p></div>
-                <div className="flex flex-wrap gap-1.5">{group.items.map((item, ti) => (<motion.span key={item} className="rounded-full border border-white/12 bg-black/40 px-2.5 py-1.5 text-[0.66rem] text-parchment/70" initial={{ opacity: 0, y: 5 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: gi * 0.05 + 0.2 + ti * 0.025, duration: 0.3, ease }}>{item}</motion.span>))}</div>
-              </motion.div>
+                <div className="flex flex-wrap gap-1.5">{group.items.map((item) => (<span key={item} className="rounded-full border border-white/12 bg-black/40 px-2.5 py-1.5 text-[0.66rem] text-parchment/70">{item}</span>))}</div>
+              </div>
             ))}
           </div>
-          <motion.div className="mt-6" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.7, ease }}>
+          <div ref={certsRef} className="mt-6">
             <div className="mb-4 flex items-center gap-2"><span className="text-sm">🎓</span><p className="font-heading text-sm text-parchment/90">Certifications</p></div>
             <div className="space-y-3">
-              {certifications.map((cert, ci) => (<motion.div key={cert.title} className={`${card} relative overflow-hidden`} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: ci * 0.08, duration: 0.6, ease }}><p className="text-[0.6rem] font-medium uppercase tracking-[0.22em] text-sakura-pink/70">{cert.issuer}</p><p className="mt-1 text-sm font-medium leading-snug text-parchment/90">{cert.title}</p><span className="mt-2 inline-block rounded-full border border-sakura-pink/20 bg-sakura-pink/8 px-2.5 py-0.5 text-[0.58rem] tracking-wide text-sakura-pink/80">{cert.badge}</span></motion.div>))}
+              {certifications.map((cert) => (<div key={cert.title} className={`m-cert-card ${card} relative overflow-hidden`}><p className="text-[0.6rem] font-medium uppercase tracking-[0.22em] text-sakura-pink/70">{cert.issuer}</p><p className="mt-1 text-sm font-medium leading-snug text-parchment/90">{cert.title}</p><span className="mt-2 inline-block rounded-full border border-sakura-pink/20 bg-sakura-pink/8 px-2.5 py-0.5 text-[0.58rem] tracking-wide text-sakura-pink/80">{cert.badge}</span></div>))}
             </div>
-          </motion.div>
+          </div>
         </MobileSection>
 
         <MobileSection id="m-projects" eyebrow="Work" title="Projects" showPetals theme={theme}>
-          <div className="space-y-4">
-            {projects.map((project, i) => (
-              <motion.article key={project.title} className={`${card} relative space-y-3 overflow-hidden`} initial={{ opacity: 0, y: 24, scale: 0.97 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: i * 0.07, duration: 0.7, ease }}>
-                <motion.div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.5), transparent)' }} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.07 + 0.2, duration: 0.6, ease }} />
-                <div><motion.p className={`text-[0.65rem] uppercase tracking-[0.22em] ${pink}`} initial={{ opacity: 0, x: -8 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 + 0.1, duration: 0.5, ease }}>{project.role}</motion.p><h3 className="mt-1 font-heading text-base text-parchment/95">{project.title}</h3></div>
+          <div ref={projectsRef} className="space-y-4">
+            {projects.map((project) => (
+              <article key={project.title} className={`m-project-card ${card} relative space-y-3 overflow-hidden`}>
+                <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.5), transparent)' }} />
+                <div><p className={`text-[0.65rem] uppercase tracking-[0.22em] ${pink}`}>{project.role}</p><h3 className="mt-1 font-heading text-base text-parchment/95">{project.title}</h3></div>
                 <p className={`text-xs leading-relaxed ${muted}`}>{project.description}</p>
-                <div className="flex flex-wrap gap-2">{project.stack.map((tech, ti) => (<motion.span key={tech} className="rounded-full border border-white/12 bg-black/40 px-2.5 py-1 text-[0.65rem] text-parchment/60" initial={{ opacity: 0, y: 6 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 + 0.25 + ti * 0.04, duration: 0.35, ease }}>{tech}</motion.span>))}</div>
+                <div className="flex flex-wrap gap-2">{project.stack.map((tech) => (<span key={tech} className="rounded-full border border-white/12 bg-black/40 px-2.5 py-1 text-[0.65rem] text-parchment/60">{tech}</span>))}</div>
                 <div className="flex items-center gap-3 pt-1">
                   <a href={project.github} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-white/[0.04] px-3.5 py-2 text-[0.68rem] text-parchment/80 active:scale-95"><svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-3 .6-3.6-1.3-3.6-1.3-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1.7 1.1 2.2 1.6.2-.7.4-1.1.7-1.4-2.4-.3-4.8-1.2-4.8-5.4 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-2.9 0 0 .9-.3 3 1.1a10.3 10.3 0 015.5 0c2.1-1.4 3-1.1 3-1.1.6 1.5.2 2.6.1 2.9.7.8 1.1 1.8 1.1 3 0 4.2-2.4 5.1-4.8 5.4.4.3.8 1 .8 2v2.9c0 .3.2.6.7.5A10 10 0 0012 2z" /></svg><span>Code</span></a>
                   {project.live && <a href={project.live} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.16] bg-white/[0.06] px-3.5 py-2 text-[0.68rem] text-parchment/85 active:scale-95"><svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" /></svg><span>Live</span></a>}
                 </div>
-              </motion.article>
+              </article>
             ))}
           </div>
         </MobileSection>
@@ -306,16 +315,16 @@ export default function MobilePortfolio() {
         <MobileSection id="m-experience" eyebrow="Path" title="Experience" theme={theme}>
           <div className="relative pl-5">
             <div className="absolute inset-y-0 left-1 w-px bg-gradient-to-b from-sakura-pink/40 via-white/8 to-transparent" />
-            <div className="space-y-5">
-              {experience.map((entry, i) => (
-                <motion.article key={entry.period} className={`${card} relative`} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ delay: i * 0.08, duration: 0.7, ease }}>
+            <div ref={expRef} className="space-y-5">
+              {experience.map((entry) => (
+                <article key={entry.period} className={`m-exp-card ${card} relative`}>
                   <div className="absolute -left-[25px] top-5 h-2.5 w-2.5 rounded-full border border-sakura-pink/40 bg-sakura-pink/70" />
                   <p className={`text-[0.65rem] uppercase tracking-[0.22em] ${pink}`}>{entry.period}</p>
                   <h3 className="mt-1 font-heading text-sm text-parchment/90">{entry.place}</h3>
                   <p className={`text-[0.6rem] ${muted}`}>{entry.location}</p>
                   <p className="mt-0.5 text-xs font-medium text-parchment/80">{entry.role}</p>
-                  <ul className={`mt-2.5 space-y-1.5 text-[0.7rem] leading-relaxed ${muted}`}>{entry.bullets.map((bullet, bi) => (<motion.li key={bi} className="flex gap-2" initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 + bi * 0.03, duration: 0.4, ease }}><span className="mt-1.5 h-0.5 w-2 shrink-0 rounded-full bg-sakura-pink/40" /><span>{bullet}</span></motion.li>))}</ul>
-                </motion.article>
+                  <ul className={`mt-2.5 space-y-1.5 text-[0.7rem] leading-relaxed ${muted}`}>{entry.bullets.map((bullet, bi) => (<li key={bi} className="flex gap-2"><span className="mt-1.5 h-0.5 w-2 shrink-0 rounded-full bg-sakura-pink/40" /><span>{bullet}</span></li>))}</ul>
+                </article>
               ))}
             </div>
           </div>
@@ -339,10 +348,10 @@ export default function MobilePortfolio() {
           <MobileContactPrograms />
         </MobileSection>
 
-        <motion.footer className="mt-10 space-y-3 px-1 pb-4 text-center" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+        <footer ref={footerRef} className="mt-10 space-y-3 px-1 pb-4 text-center">
           <div className="mx-auto h-px w-2/3 bg-gradient-to-r from-transparent via-sakura-pink/30 to-transparent" />
           <p className="text-[0.65rem] text-parchment/50">&copy; {new Date().getFullYear()} Hrithik Ghosh. Built with care.</p>
-        </motion.footer>
+        </footer>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.12] bg-black/90 backdrop-blur-lg safe-bottom">
@@ -361,14 +370,15 @@ export default function MobilePortfolio() {
 
 function MobileSection({ id, eyebrow, title, children, showPetals = false, theme = 'night' }: { id: string; eyebrow: string; title: string; children: React.ReactNode; showPetals?: boolean; theme?: 'night' | 'day' }) {
   const shell = theme === 'night' ? nightMobileSectionShell : dayMobileSectionShell
+  const headerRef = useScrollReveal<HTMLElement>({ from: { opacity: 0, y: 16 }, to: { opacity: 1, y: 0 }, start: 'top 85%' })
   return (
     <section id={id} className="py-8" aria-label={title}>
       <div className={shell}>
         {showPetals && <SectionSakuraRain isNight={theme === 'night'} />}
-        <motion.header className="relative z-10 mb-5 space-y-1" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.7, ease }}>
+        <header ref={headerRef} className="relative z-10 mb-5 space-y-1">
           <p className={`text-[0.6rem] uppercase tracking-[0.28em] ${theme === 'night' ? 'text-sakura-pink/70' : 'text-rose-500/70'}`}>{eyebrow}</p>
           <h2 className={`font-heading text-xl ${theme === 'night' ? 'text-parchment/90' : 'text-[color:var(--dawn-text)]'}`}>{title}</h2>
-        </motion.header>
+        </header>
         <div className="relative z-10">{children}</div>
       </div>
     </section>

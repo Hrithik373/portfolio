@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
+import { ScrollTrigger } from '../../../../lib/gsap-setup'
 import { apiUrl, friendlyApiErrorMessage } from '../../../../config/apiBase'
 import type { SectionProps } from '../SectionTypes'
 import { dayGlassHeroVoice, nightGlassHeroVoice } from '../sectionGlass'
@@ -257,6 +258,8 @@ export function HeroVoiceNoteCard({
     unavailable?: boolean
     message?: string
   } | null>(null)
+  const [cardVisible, setCardVisible] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
   const micSelectRef = useRef<HTMLSelectElement>(null)
@@ -264,6 +267,18 @@ export function HeroVoiceNoteCard({
   const blobUrlRef = useRef<string | null>(null)
   const statusTimerRef = useRef(0)
   const micSelectId = useId()
+
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: 'top 88%',
+      once: true,
+      onEnter: () => setCardVisible(true),
+    })
+    return () => st.kill()
+  }, [])
 
   useEffect(() => {
     onVoiceStreamChange?.(activeStream)
@@ -566,11 +581,11 @@ export function HeroVoiceNoteCard({
 
   return (
     <motion.div
+      ref={cardRef}
       className={`relative overflow-hidden p-5 sm:p-6 ${contentTopClassName} ${isNight ? nightGlassHeroVoice : dayGlassHeroVoice}`}
       variants={cardEnter}
       initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 'some', margin: '0px 0px 80px 0px' }}
+      animate={cardVisible ? 'show' : 'hidden'}
       whileHover={reduceMotion ? undefined : { y: -3, rotate: -0.4 }}
       transition={{ type: 'spring', stiffness: 280, damping: 24 }}
     >
@@ -609,8 +624,7 @@ export function HeroVoiceNoteCard({
       <motion.div
         className={`absolute left-5 top-5 h-12 w-px origin-top sm:left-6 sm:top-6 ${isNight ? 'bg-gradient-to-b from-sakura-pink/50 to-transparent' : 'bg-gradient-to-b from-rose-400/50 to-transparent'}`}
         initial={{ scaleY: 0 }}
-        whileInView={{ scaleY: 1 }}
-        viewport={{ once: true }}
+        animate={cardVisible ? { scaleY: 1 } : { scaleY: 0 }}
         transition={{ delay: 0.35, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         aria-hidden
       />
@@ -619,8 +633,7 @@ export function HeroVoiceNoteCard({
         <motion.div
           className={`flex shrink-0 flex-col items-center gap-2 sm:w-36 ${isNight ? '' : ''}`}
           initial={{ opacity: 0, x: reduceMotion ? 0 : -16, rotate: reduceMotion ? 0 : -4 }}
-          whileInView={{ opacity: 1, x: 0, rotate: 0 }}
-          viewport={{ once: true }}
+          animate={cardVisible ? { opacity: 1, x: 0, rotate: 0 } : { opacity: 0, x: reduceMotion ? 0 : -16, rotate: reduceMotion ? 0 : -4 }}
           transition={{ type: 'spring', stiffness: 200, damping: 22, delay: 0.08 }}
         >
           <motion.div
@@ -673,8 +686,7 @@ export function HeroVoiceNoteCard({
           className="min-w-0 flex-1 space-y-3"
           variants={contentStagger}
           initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
+          animate={cardVisible ? 'show' : 'hidden'}
         >
           <motion.div variants={contentItem}>
             <h2 className={`font-heading text-lg sm:text-xl ${isNight ? 'text-parchment/95' : 'text-[color:var(--dawn-text)]'}`}>
@@ -1021,8 +1033,7 @@ export function HeroVoiceNoteCard({
       <motion.div
         className={`pointer-events-none absolute bottom-3 right-4 h-px w-24 origin-right sm:w-32 ${isNight ? 'bg-gradient-to-l from-sakura-pink/30 to-transparent' : 'bg-gradient-to-l from-rose-300/50 to-transparent'}`}
         initial={{ scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true }}
+        animate={cardVisible ? { scaleX: 1 } : { scaleX: 0 }}
         transition={{ delay: 0.5, duration: 0.9 }}
         aria-hidden
       />

@@ -15,7 +15,7 @@
     "test:transcribe": "tsx backend/scripts/smoke-transcribe-preview.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

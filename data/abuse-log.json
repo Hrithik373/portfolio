@@ -17,11 +17,43 @@
           "endpoint": "/api/voice-note"
         }
       ]
+    },
+    "::ffff:127.0.0.1": {
+      "ip": "::ffff:127.0.0.1",
+      "fingerprint": "fp_h7ag5s",
+      "emails": [
+        "voice-smoke@example.com",
+        "not-an-email"
+      ],
+      "attempts": 3,
+      "firstSeen": "2026-03-31T19:16:03.208Z",
+      "lastSeen": "2026-03-31T19:16:03.449Z",
+      "status": "warned",
+      "history": [
+        {
+          "time": "2026-03-31T19:16:03.208Z",
+          "email": "voice-smoke@example.com",
+          "endpoint": "/api/voice-note"
+        },
+        {
+          "time": "2026-03-31T19:16:03.331Z",
+          "email": "not-an-email",
+          "endpoint": "/api/voice-note"
+        },
+        {
+          "time": "2026-03-31T19:16:03.449Z",
+          "email": "voice-smoke@example.com",
+          "endpoint": "/api/voice-note"
+        }
+      ]
     }
   },
   "fingerprintMap": {
     "fp_amsugr": [
       "::1"
+    ],
+    "fp_h7ag5s": [
+      "::ffff:127.0.0.1"
     ]
   },
   "attemptLog": [
@@ -34,8 +66,38 @@
       "acceptLanguage": "en-US,en;q=0.9",
       "fingerprint": "fp_amsugr",
       "blocked": false
+    },
+    {
+      "timestamp": "2026-03-31T19:16:03.208Z",
+      "ip": "::ffff:127.0.0.1",
+      "email": "voice-smoke@example.com",
+      "endpoint": "/api/voice-note",
+      "userAgent": "node",
+      "acceptLanguage": "*",
+      "fingerprint": "fp_h7ag5s",
+      "blocked": false
+    },
+    {
+      "timestamp": "2026-03-31T19:16:03.331Z",
+      "ip": "::ffff:127.0.0.1",
+      "email": "not-an-email",
+      "endpoint": "/api/voice-note",
+      "userAgent": "node",
+      "acceptLanguage": "*",
+      "fingerprint": "fp_h7ag5s",
+      "blocked": false
+    },
+    {
+      "timestamp": "2026-03-31T19:16:03.449Z",
+      "ip": "::ffff:127.0.0.1",
+      "email": "voice-smoke@example.com",
+      "endpoint": "/api/voice-note",
+      "userAgent": "node",
+      "acceptLanguage": "*",
+      "fingerprint": "fp_h7ag5s",
+      "blocked": false
     }
   ],
   "totalBlocked": 0,
-  "lastUpdated": "2026-03-30T14:34:02.768Z"
+  "lastUpdated": "2026-03-31T19:36:02.315Z"
 }

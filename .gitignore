@@ -27,7 +27,7 @@ dist-ssr
 *.sw?
 
 # Security
-backend/data/
+backend/data/*.json
 *.pem
 *.key
 

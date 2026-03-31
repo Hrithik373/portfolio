@@ -1,12 +1,12 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   motion,
   useInView,
   useMotionValue,
-  useScroll,
-  useSpring,
   useTransform,
+  useSpring,
 } from 'framer-motion'
+import { gsap } from '../../../../lib/gsap-setup'
 
 import { SectionShell } from '../SectionShell/SectionShell'
 import type { SectionProps } from '../SectionTypes'
@@ -31,7 +31,7 @@ const entries = [
     ],
   },
   {
-    period: '06/2021 — 10/2023',
+    period: '06/2021 — 10/2022',
     place: 'Amdocs',
     location: 'Pune, India',
     role: 'Software Engineer',
@@ -64,25 +64,43 @@ const sakuraLine = 'linear-gradient(180deg, rgba(245,198,214,0.85) 0%, rgba(236,
 const sakuraGlow = '0 0 14px rgba(245,198,214,0.55), 0 0 28px rgba(236,72,153,0.2)'
 
 function TimelineProgress({ theme }: { theme: 'night' | 'day' }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start 0.8', 'end 0.2'],
-  })
-  const scaleY = useSpring(scrollYProgress, { stiffness: 90, damping: 28 })
+  const containerRef = useRef<HTMLDivElement>(null)
+  const fillRef = useRef<HTMLDivElement>(null)
   const isNight = theme === 'night'
 
+  useEffect(() => {
+    const fill = fillRef.current
+    const container = containerRef.current
+    if (!fill || !container) return
+
+    gsap.set(fill, { scaleY: 0, transformOrigin: 'top center' })
+    const st = gsap.to(fill, {
+      scaleY: 1,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: container.parentElement,
+        start: 'top 80%',
+        end: 'bottom 20%',
+        scrub: 0.5,
+      },
+    })
+
+    return () => {
+      if (st.scrollTrigger) st.scrollTrigger.kill()
+    }
+  }, [])
+
   return (
-    <div ref={ref} className="absolute inset-y-0 left-3 w-[2px] overflow-visible sm:left-3.5">
+    <div ref={containerRef} className="absolute inset-y-0 left-3 w-[2px] overflow-visible sm:left-3.5">
       <div
         className={`absolute inset-0 rounded-full ${
           isNight ? 'bg-white/[0.06]' : 'bg-white/[0.12]'
         }`}
       />
-      <motion.div
-        className="absolute inset-x-0 top-0 origin-top rounded-full"
+      <div
+        ref={fillRef}
+        className="absolute inset-x-0 top-0 rounded-full"
         style={{
-          scaleY,
           height: '100%',
           background: isNight
             ? 'linear-gradient(180deg, rgba(245,198,214,0.75) 0%, rgba(245,198,214,0.22) 100%)'
@@ -259,18 +277,15 @@ function ExperienceCard({
       {/* Scan line reveal */}
       {isInView && (
         <motion.div
-          className="pointer-events-none absolute inset-x-0 z-20 h-[2px]"
+          className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[2px]"
           style={{
             background: `linear-gradient(90deg, transparent 0%, ${scanAccent} 50%, transparent 100%)`,
             boxShadow: isNight
               ? `0 0 16px ${entry.accent}`
               : '0 0 18px rgba(236,72,153,0.55), 0 0 32px rgba(245,198,214,0.35)',
           }}
-          style={{
-            top: 0,
-          }}
           initial={{ y: 0, opacity: 1 }}
-          animate={{ y: ref.current?.offsetHeight ?? 200, opacity: 0 }}
+          animate={{ y: 200, opacity: 0 }}
           transition={{ delay: borderTraceDelay + 0.1, duration: 0.8, ease: 'easeInOut' }}
         />
       )}

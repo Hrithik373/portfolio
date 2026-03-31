@@ -46,7 +46,7 @@ const entries = [
     ],
   },
   {
-    period: '06/2025 — 06/2025',
+    period: '01/2023 — 06/2025',
     place: 'West Bengal Youth Computer Center (Jagacha)',
     location: 'Kolkata, India',
     role: 'Software Engineer',
@@ -266,8 +266,11 @@ function ExperienceCard({
               ? `0 0 16px ${entry.accent}`
               : '0 0 18px rgba(236,72,153,0.55), 0 0 32px rgba(245,198,214,0.35)',
           }}
-          initial={{ top: 0, opacity: 1 }}
-          animate={{ top: '100%', opacity: 0 }}
+          style={{
+            top: 0,
+          }}
+          initial={{ y: 0, opacity: 1 }}
+          animate={{ y: ref.current?.offsetHeight ?? 200, opacity: 0 }}
           transition={{ delay: borderTraceDelay + 0.1, duration: 0.8, ease: 'easeInOut' }}
         />
       )}

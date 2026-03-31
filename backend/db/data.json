@@ -1,0 +1,23 @@
+{
+  "rawEmails": [
+    {
+      "id": "389bcd38-7ba7-4dfd-b50b-06775f6a70cc",
+      "receivedAt": "2026-03-28T21:27:16.481Z",
+      "fromName": "test",
+      "fromEmail": "test@example.com",
+      "subject": "Test",
+      "message": "Hello",
+      "source": "inbound"
+    }
+  ],
+  "replies": [],
+  "pipelineReplies": [
+    {
+      "id": "9dd5d789-5855-47c1-8d19-57b9d19da75e",
+      "rawEmailId": "389bcd38-7ba7-4dfd-b50b-06775f6a70cc",
+      "status": "sent",
+      "text": "Hi test,\n\nThank you for reaching out. I’ve received your note and will reply soon with more detail.\n\nBest,\nHrithik",
+      "updatedAt": "2026-03-28T21:27:20.244Z"
+    }
+  ]
+}

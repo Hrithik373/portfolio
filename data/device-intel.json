@@ -1,0 +1,17 @@
+{
+  "devices": {},
+  "deviceToIPs": {},
+  "ipToDevices": {},
+  "leakedIPToDevices": {},
+  "totalDevices": 0,
+  "totalSightings": 0,
+  "lastUpdated": "2026-03-30T14:34:02.770Z",
+  "voiceNoteStats": {
+    "totalSubmissions": 0,
+    "uniqueDevices": 0,
+    "uniqueIPs": 0,
+    "blockedAttempts": 0,
+    "deviceIds": []
+  },
+  "blockedDevices": []
+}

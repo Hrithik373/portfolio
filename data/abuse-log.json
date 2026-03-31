@@ -1,0 +1,41 @@
+{
+  "records": {
+    "::1": {
+      "ip": "::1",
+      "fingerprint": "fp_amsugr",
+      "emails": [
+        "hrithikgh@gmail.com"
+      ],
+      "attempts": 1,
+      "firstSeen": "2026-03-30T14:29:49.601Z",
+      "lastSeen": "2026-03-30T14:29:49.601Z",
+      "status": "clean",
+      "history": [
+        {
+          "time": "2026-03-30T14:29:49.601Z",
+          "email": "hrithikgh@gmail.com",
+          "endpoint": "/api/voice-note"
+        }
+      ]
+    }
+  },
+  "fingerprintMap": {
+    "fp_amsugr": [
+      "::1"
+    ]
+  },
+  "attemptLog": [
+    {
+      "timestamp": "2026-03-30T14:29:49.601Z",
+      "ip": "::1",
+      "email": "hrithikgh@gmail.com",
+      "endpoint": "/api/voice-note",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+      "acceptLanguage": "en-US,en;q=0.9",
+      "fingerprint": "fp_amsugr",
+      "blocked": false
+    }
+  ],
+  "totalBlocked": 0,
+  "lastUpdated": "2026-03-30T14:34:02.768Z"
+}

@@ -1,0 +1,31 @@
+# render.yaml — place in project root
+# Render Blueprint: defines your backend service configuration
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: hrithik-portfolio-api
+    runtime: node
+    region: oregon   # or singapore, frankfurt — pick closest to your users
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: CORS_ORIGINS
+        value: "https://yourdomain.com,https://www.yourdomain.com"
+      - key: ANTHROPIC_API_KEY
+        sync: false  # set manually in Render dashboard — never in code
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: "noreply@yourdomain.com"
+      - key: EMAIL_TO
+        value: "hrithikgh29@gmail.com"
+    autoDeploy: true
+    # Free tier spins down after 15 min inactivity — first request takes ~30s
+    # Consider UptimeRobot (free) to ping /api/health every 14 min to stay warm

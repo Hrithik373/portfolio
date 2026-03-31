@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Yuji+Syuku&family=Zen+Maru+Gothic:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: theme('fontFamily.body');
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'kern' 1;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+@layer base {
+  body {
+    @apply font-body antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading tracking-wide;
+  }
+}
+
+body[data-theme='night'] {
+  @apply bg-black text-parchment scroll-smooth;
+}
+
+body[data-theme='day'] {
+  @apply bg-parchment text-ink-deep scroll-smooth;
+}
+
+/* Neon text glow utilities for header/nav */
+.neon-text-night {
+  text-shadow:
+    0 0 8px rgba(245, 198, 214, 0.9),
+    0 0 18px rgba(245, 198, 214, 0.45);
+}
+
+.neon-text-day {
+  text-shadow:
+    0 0 6px rgba(139, 47, 60, 0.4),
+    0 0 14px rgba(245, 198, 214, 0.3);
+}
+
+.font-jp-hand {
+  font-family: 'Yuji Syuku', 'Times New Roman', serif;
+}
+
+/* Ultra subtle grain / ink-noise overlay */
+.grain-overlay {
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(circle, rgba(0, 0, 0, 0.3) 1px, transparent 1px);
+  background-size: 2px 2px;
+  mix-blend-mode: soft-light;
+  opacity: 0.03;
+}
+
+/* Safe area for mobile bottom nav (iPhone notch / home indicator) */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Dawn atmosphere slider — transparent track, fill drawn underneath */
+.dawn-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.dawn-range-input:active {
+  cursor: grabbing;
+}
+
+.dawn-range-input:focus {
+  outline: none;
+}
+
+.dawn-range-input:focus-visible {
+  outline: 2px solid rgba(192, 132, 252, 0.45);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.dawn-range-input::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.dawn-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 9999px;
+  background: linear-gradient(160deg, #ffffff 0%, #fce7f3 55%, #fbcfe8 100%);
+  border: 1px solid rgba(219, 39, 119, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.65) inset,
+    0 1px 2px rgba(15, 23, 42, 0.12),
+    0 4px 14px rgba(236, 72, 153, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dawn-range-input:active::-webkit-slider-thumb {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.65) inset,
+    0 2px 4px rgba(15, 23, 42, 0.14),
+    0 6px 20px rgba(236, 72, 153, 0.38);
+}
+
+.dawn-range-input::-moz-range-track {
+  height: 6px;
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.dawn-range-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: linear-gradient(160deg, #ffffff 0%, #fce7f3 55%, #fbcfe8 100%);
+  border: 1px solid rgba(219, 39, 119, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.65) inset,
+    0 1px 2px rgba(15, 23, 42, 0.12),
+    0 4px 14px rgba(236, 72, 153, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

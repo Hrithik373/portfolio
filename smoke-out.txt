@@ -1,0 +1,10 @@
+﻿
+> hrithikghportfolio@0.0.0 test:api
+> tsx backend/scripts/smoke-voice-note.ts
+
+[1] GET /api/voice-note ΓåÆ 200 { ok: true, accepts: 'POST multipart: email, warmNote?, audio' }
+[2] GET /api/health ΓåÆ 200 { ok: true }
+[3] POST without audio ΓåÆ 400 { message: 'Please attach a voice recording.' }
+[4] POST invalid email ΓåÆ 400 { message: 'A valid email is required.' }
+[5] POST dummy webm ΓåÆ 200 { ok: true, transcribed: false }
+    Full send OK (check inbox if SMTP set).

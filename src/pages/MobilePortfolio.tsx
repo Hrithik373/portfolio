@@ -77,7 +77,7 @@ const projects = [
 const experience = [
   { period: '03/2026 — Present', place: 'International Telecommunication Union', location: 'Geneva, Switzerland', role: 'Backend Dev & AI Full Stack Engineer (LLM & Voice Module)', bullets: ['Re-engineered the Genie AI NCD Healthcare semantic cache intercept point post-guardrail, eliminating redundant LLM inference on cache hits and reducing API token costs and latency.', 'Created a clinical query classification gate routing safety-critical NCD queries via the full RAG pipeline using cosine similarity (≥0.95 clinical, ≥0.85 general).', 'Developed a multi-path retrieval pipeline integrating vector search, sparse indexing, Knowledge Graph traversal, keyword search, and Re-Ranker for guideline-based answers.', 'Architectured a validated cache store-back mechanism persisting only guardrail-approved LLM responses with query embeddings for progressive cache warming.', 'Defined a TTL-based cache invalidation strategy linked to knowledge base versioning, auto-purging cached responses when medical guidelines update.', 'Integrated a multilingual voice-text I/O system connecting STT, TTS, and Machine Translation layers with consistent cache behavior across languages.', 'Designed the Amina Care frontend with voice/text I/O, session-aware chat UI, and interactive pipeline visualisation.', 'Produced system architecture documentation, pipeline diagrams, and full team onboarding materials.'] },
   { period: '06/2021 — 10/2023', place: 'Amdocs', location: 'Pune, India', role: 'Software Engineer', bullets: ['Developed and maintained CRM/OMS products with Java and Spring, achieving a 20% performance boost.', 'Executed testing for online/offline events and billing, ensuring 95% accuracy rate.', 'Conducted API testing and debugging for Java and REST APIs, decreasing bug resolution time by 30%.', 'Streamlined development with Ginger, JSON, and CI/CD pipelines, enhancing team efficiency.', 'Contributed to frontend development with REST API and React JS.', 'Automated testing with Ginger and Selenium, reducing manual testing time by 40%.'] },
-  { period: '06/2025 — 06/2025', place: 'West Bengal Youth Computer Center (Jagacha)', location: 'Kolkata, India', role: 'Software Engineer', bullets: ['Worked on front-end web development with the HP exam integration system.', 'Designed workflow and CI/CD integrations with Jira.', 'Worked with SQL to merge student datasets with billing entities.', 'Mentored students and professionals through mentorship programs.'] },
+  { period: '01/2023 — 06/2025', place: 'West Bengal Youth Computer Center (Jagacha)', location: 'Kolkata, India', role: 'Software Engineer', bullets: ['Worked on front-end web development with the HP exam integration system.', 'Designed workflow and CI/CD integrations with Jira.', 'Worked with SQL to merge student datasets with billing entities.', 'Mentored students and professionals through mentorship programs.'] },
 ]
 
 function mixLin(a: number, b: number, t: number) { return a + (b - a) * t }
@@ -131,7 +131,7 @@ export default function MobilePortfolio() {
   }, [isNight]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    observerRef.current = new IntersectionObserver((entries) => { for (const entry of entries) { if (entry.isIntersecting) { setActiveId(entry.target.id); break } } }, { threshold: 0.45 })
+    observerRef.current = new IntersectionObserver((entries) => { for (const entry of entries) { if (entry.isIntersecting) { setActiveId(entry.target.id); break } } }, { threshold: 0.45, rootMargin: '0px 0px -10% 0px' })
     sections.forEach((s) => { const el = document.getElementById(s.id); if (el) observerRef.current!.observe(el) })
     return () => observerRef.current?.disconnect()
   }, [])
@@ -162,7 +162,7 @@ export default function MobilePortfolio() {
         <button
           type="button"
           onClick={() => setTheme(isNight ? 'day' : 'night')}
-          className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.65rem] font-medium tracking-[0.18em] uppercase shadow-soft-glow backdrop-blur-md transition-all ${
+          className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.65rem] font-medium tracking-[0.18em] uppercase shadow-soft-glow backdrop-blur-md transition-[background-color,border-color,box-shadow,color] ${
             isNight
               ? 'border-white/20 bg-white/10 text-white/90 shadow-[0_0_18px_rgba(255,255,255,0.35)] hover:bg-white/15'
               : 'border-pink-200/60 bg-white/70 text-[#4a3a44] shadow-[0_0_18px_rgba(255,182,193,0.45)] hover:bg-white/85'

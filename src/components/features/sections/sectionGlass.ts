@@ -23,3 +23,6 @@ export const daySectionHeroFrame =
 /** Mobile section shell — lighter gradient for inner animation visibility. */
 export const nightMobileSectionShell =
   'relative overflow-hidden rounded-3xl border border-white/[0.12] bg-gradient-to-b from-white/[0.04] via-black/65 to-black/85 p-5 shadow-[0_0_72px_rgba(0,0,0,0.82)] sm:p-6'
+
+export const dayMobileSectionShell =
+  'relative overflow-hidden rounded-3xl border border-[color:var(--dawn-card-border)] bg-[color:var(--dawn-card)] p-5 shadow-[0_8px_40px_var(--dawn-shadow),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-xl sm:p-6'

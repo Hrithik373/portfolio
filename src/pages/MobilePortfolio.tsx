@@ -1,13 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 
 import { apiUrl } from '../config/apiBase'
+import { MidnightScrollBackground } from '../components/features/backgrounds/MidnightScrollBackground'
+import { SakuraCanvas } from '../components/features/petals/SakuraCanvas'
 import { BlogPost } from '../components/features/sections/BlogPost/BlogPost'
 import { ContactProgramCards } from '../components/features/sections/Contact/ContactProgramCards'
 import { SectionSakuraRain } from '../components/features/petals/FloatingCardPetals'
 import { VoiceCardPetals } from '../components/features/petals/VoiceCardPetals'
+import { HeroAudioOrnament } from '../components/features/sections/Hero/HeroAudioOrnament'
 import { HeroVoiceNoteCard } from '../components/features/sections/Hero/HeroVoiceNoteCard'
-import { nightGlassSection, nightMobileSectionShell } from '../components/features/sections/sectionGlass'
+import { dayGlassSection, dayMobileSectionShell, nightGlassSection, nightMobileSectionShell } from '../components/features/sections/sectionGlass'
 import { collectFingerprint } from '../lib/fingerprint'
 
 
@@ -77,12 +80,55 @@ const experience = [
   { period: '06/2025 — 06/2025', place: 'West Bengal Youth Computer Center (Jagacha)', location: 'Kolkata, India', role: 'Software Engineer', bullets: ['Worked on front-end web development with the HP exam integration system.', 'Designed workflow and CI/CD integrations with Jira.', 'Worked with SQL to merge student datasets with billing entities.', 'Mentored students and professionals through mentorship programs.'] },
 ]
 
+function mixLin(a: number, b: number, t: number) { return a + (b - a) * t }
+
+function buildDawnStyleVars(dawn: number): Record<string, string> {
+  const t = Math.max(0, Math.min(1, dawn))
+  const mixRgb = (from: [number, number, number], to: [number, number, number]) =>
+    `rgb(${mixLin(from[0], to[0], t)} ${mixLin(from[1], to[1], t)} ${mixLin(from[2], to[2], t)})`
+  return {
+    '--dawn-bg-from': mixRgb([210, 214, 236], [232, 198, 210]),
+    '--dawn-bg-to': mixRgb([196, 204, 230], [222, 190, 202]),
+    '--dawn-card': mixRgb([214, 218, 236], [220, 190, 202]),
+    '--dawn-card-border': mixRgb([164, 172, 200], [176, 156, 170]),
+    '--dawn-nav': mixRgb([210, 214, 236], [222, 192, 204]),
+    '--dawn-input': mixRgb([220, 224, 240], [228, 200, 210]),
+    '--dawn-text': mixRgb([34, 38, 64], [54, 42, 50]),
+    '--dawn-muted': mixRgb([62, 72, 104], [84, 72, 82]),
+    '--dawn-shadow': `rgba(${mixLin(120, 200, t)} ${mixLin(140, 120, t)} ${mixLin(200, 150, t)} / ${0.28 + t * 0.28})`,
+  }
+}
+
+function applyDawnToDom(el: HTMLElement, dawn: number) {
+  const vars = buildDawnStyleVars(dawn)
+  for (const [key, value] of Object.entries(vars)) el.style.setProperty(key, value)
+  el.style.background = 'linear-gradient(180deg, var(--dawn-bg-from), var(--dawn-bg-to))'
+}
+
 export default function MobilePortfolio() {
   const [activeId, setActiveId] = useState('m-hero')
   const [showLoader, setShowLoader] = useState(true)
+  const [theme, setTheme] = useState<'night' | 'day'>('night')
+  const [dawnIntensity, setDawnIntensity] = useState(55)
+  const [voiceStream, setVoiceStream] = useState<MediaStream | null>(null)
+  const [voiceLive, setVoiceLive] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const prefersReducedMotion = useReducedMotion() ?? false
+  const isNight = theme === 'night'
 
-  useEffect(() => { window.scrollTo({ top: 0, behavior: 'auto' }); document.body.dataset.theme = 'night'; const t = window.setTimeout(() => setShowLoader(false), 1200); return () => window.clearTimeout(t) }, [])
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+    const t = window.setTimeout(() => setShowLoader(false), 1200)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  useEffect(() => { document.body.dataset.theme = theme }, [theme])
+
+  useLayoutEffect(() => {
+    if (isNight || !rootRef.current) return
+    applyDawnToDom(rootRef.current, dawnIntensity / 100)
+  }, [isNight]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver((entries) => { for (const entry of entries) { if (entry.isIntersecting) { setActiveId(entry.target.id); break } } }, { threshold: 0.45 })
@@ -91,13 +137,73 @@ export default function MobilePortfolio() {
   }, [])
 
   const scrollTo = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
-  const card = `${nightGlassSection} p-5`
-  const muted = 'text-parchment/60'
-  const pink = 'text-sakura-pink/80'
+  const card = isNight ? `${nightGlassSection} p-5` : `${dayGlassSection} p-5`
+  const muted = isNight ? 'text-parchment/60' : 'text-[color:var(--dawn-muted)]'
+  const pink = isNight ? 'text-sakura-pink/80' : 'text-rose-500/70'
+  const rootStyle = useMemo(
+    () => !isNight ? ({ background: 'linear-gradient(180deg, var(--dawn-bg-from), var(--dawn-bg-to))' } as React.CSSProperties) : undefined,
+    [isNight],
+  )
 
   return (
-    <div className="relative min-h-screen bg-black text-parchment">
-      <div className="pointer-events-none fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,198,214,0.08) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(139,47,60,0.12) 0%, transparent 50%), black' }} />
+    <div
+      ref={rootRef}
+      className={`relative min-h-screen overflow-x-hidden ${isNight ? 'bg-black text-parchment' : 'text-[color:var(--dawn-text)]'}`}
+      style={rootStyle}
+    >
+      {isNight && <MidnightScrollBackground />}
+      {!isNight && (
+        <div className="pointer-events-none fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,198,214,0.08) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(139,47,60,0.12) 0%, transparent 50%)' }} />
+      )}
+      <SakuraCanvas reduced={prefersReducedMotion} theme={theme} />
+
+      {/* Day/Night toggle — top right */}
+      <div className="pointer-events-none fixed right-4 top-4 z-40">
+        <button
+          type="button"
+          onClick={() => setTheme(isNight ? 'day' : 'night')}
+          className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.65rem] font-medium tracking-[0.18em] uppercase shadow-soft-glow backdrop-blur-md transition-all ${
+            isNight
+              ? 'border-white/20 bg-white/10 text-white/90 shadow-[0_0_18px_rgba(255,255,255,0.35)] hover:bg-white/15'
+              : 'border-pink-200/60 bg-white/70 text-[#4a3a44] shadow-[0_0_18px_rgba(255,182,193,0.45)] hover:bg-white/85'
+          }`}
+          aria-label={isNight ? 'Switch to day mode' : 'Switch to night mode'}
+        >
+          <span aria-hidden="true" className="text-sm">{isNight ? '🌙' : '☀️'}</span>
+          <span>{isNight ? 'Night' : 'Day'}</span>
+        </button>
+      </div>
+
+      {/* Dawn warmth slider — shown in day mode below toggle */}
+      {!isNight && (
+        <div className="pointer-events-none fixed right-4 top-12 z-40 mt-1 w-44">
+          <div className="pointer-events-auto rounded-2xl border border-stone-200/80 bg-white/90 px-3 py-2 shadow-[0_8px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+            <div className="mb-1.5 flex items-center justify-between">
+              <p className="text-[0.58rem] font-semibold uppercase tracking-[0.2em] text-stone-500">Dawn warmth</p>
+              <span className="tabular-nums text-[0.68rem] font-semibold text-rose-500/90">{Math.max(0, Math.min(100, ((dawnIntensity - 20) / 80) * 100)).toFixed(0)}%</span>
+            </div>
+            <input
+              type="range"
+              className="dawn-range-input w-full"
+              min={20}
+              max={100}
+              step="any"
+              value={dawnIntensity}
+              onInput={(e) => {
+                const v = Number((e.target as HTMLInputElement).value)
+                setDawnIntensity(v)
+                if (rootRef.current) applyDawnToDom(rootRef.current, v / 100)
+              }}
+              onChange={(e) => {
+                const v = Number(e.target.value)
+                setDawnIntensity(v)
+                if (rootRef.current) applyDawnToDom(rootRef.current, v / 100)
+              }}
+              aria-label="Dawn warmth"
+            />
+          </div>
+        </div>
+      )}
 
       <AnimatePresence>
         {showLoader && (
@@ -112,10 +218,14 @@ export default function MobilePortfolio() {
       <main className="relative z-10 w-full min-w-0 px-4 pb-24 pt-6">
         {/* Hero */}
         <motion.section id="m-hero" className="flex min-h-[85vh] flex-col justify-center gap-6 py-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }}>
-          <div className="mx-auto h-32 w-32 rounded-full border border-white/[0.14] bg-gradient-to-b from-black via-black to-ink-deep/90 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_0_60px_rgba(0,0,0,0.9)]"><div className="flex h-full w-full items-center justify-center"><div className="h-20 w-20 rounded-full border border-white/12 bg-gradient-to-br from-white/[0.06] to-transparent" /></div></div>
+          {/* Top circle with HeroAudioOrnament */}
+          <div className="relative mx-auto h-32 w-32">
+            <div className="h-32 w-32 rounded-full border border-white/[0.14] bg-gradient-to-b from-black via-black to-ink-deep/90 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_0_60px_rgba(0,0,0,0.9)]" />
+            <HeroAudioOrnament theme={theme} stream={voiceStream} live={voiceLive} />
+          </div>
           <div className="space-y-3 text-center">
             <p className={`text-[0.65rem] uppercase tracking-[0.22em] ${pink}`}>AI · ML · Backend</p>
-            <h1 className="font-heading text-2xl leading-snug text-parchment/95">Building trustworthy AI systems<span className="block text-parchment/60">for real-world healthcare and products.</span></h1>
+            <h1 className={`font-heading text-2xl leading-snug ${isNight ? 'text-parchment/95' : 'text-[color:var(--dawn-text)]'}`}>Building trustworthy AI systems<span className={`block ${isNight ? 'text-parchment/60' : 'text-[color:var(--dawn-muted)]'}`}>for real-world healthcare and products.</span></h1>
             <p className={`mx-auto max-w-xs text-xs leading-relaxed ${muted}`}>AI & ML Engineer with 4+ years in backend systems, scalable product engineering, and AI-driven solutions.</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
@@ -123,14 +233,18 @@ export default function MobilePortfolio() {
             <button type="button" onClick={() => scrollTo('m-experience')} className="rounded-full border border-white/[0.14] bg-white/[0.05] px-4 py-2.5 text-xs font-medium tracking-wide text-parchment/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] active:scale-95 sm:px-5">Career timeline</button>
             <a href="/hrithikgh_resume.pdf" download="hrithikgh_resume.pdf" className="rounded-full border border-ink-red/70 bg-black/60 px-4 py-2.5 text-xs font-medium tracking-wide text-parchment/80 active:scale-95 sm:px-5">My résumé · PDF</a>
           </div>
-          {/* ✿ Added: petals as sibling outside the card's backdrop-blur */}
+          {/* petals as sibling outside the card's backdrop-blur */}
           <div className="relative">
-            <VoiceCardPetals isNight />
-            <HeroVoiceNoteCard theme="night" />
+            <VoiceCardPetals isNight={isNight} />
+            <HeroVoiceNoteCard
+              theme={theme}
+              onVoiceStreamChange={setVoiceStream}
+              onVoiceRecordingChange={setVoiceLive}
+            />
           </div>
         </motion.section>
 
-        <MobileSection id="m-about" eyebrow="Story" title="About" showPetals>
+        <MobileSection id="m-about" eyebrow="Story" title="About" showPetals theme={theme}>
           <div className={`${card} relative overflow-hidden space-y-3 text-sm leading-relaxed text-parchment/75`}>
             <span className="pointer-events-none absolute -right-2 -top-3 select-none font-jp-hand text-[6rem] leading-none text-white/[0.02]" aria-hidden>道</span>
             <motion.div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,198,214,0.5), transparent)' }} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 1, ease }} />
@@ -154,7 +268,7 @@ export default function MobilePortfolio() {
           </div>
         </MobileSection>
 
-        <MobileSection id="m-skills" eyebrow="Dojo" title="Skills & Certifications">
+        <MobileSection id="m-skills" eyebrow="Dojo" title="Skills & Certifications" theme={theme}>
           <div className="space-y-4">
             {skillGroups.map((group, gi) => (
               <motion.div key={group.title} className={`${card} relative overflow-hidden`} initial={{ opacity: 0, y: 18, scale: 0.97 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: gi * 0.05, duration: 0.6, ease }}>
@@ -172,7 +286,7 @@ export default function MobilePortfolio() {
           </motion.div>
         </MobileSection>
 
-        <MobileSection id="m-projects" eyebrow="Work" title="Projects" showPetals>
+        <MobileSection id="m-projects" eyebrow="Work" title="Projects" showPetals theme={theme}>
           <div className="space-y-4">
             {projects.map((project, i) => (
               <motion.article key={project.title} className={`${card} relative space-y-3 overflow-hidden`} initial={{ opacity: 0, y: 24, scale: 0.97 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: i * 0.07, duration: 0.7, ease }}>
@@ -189,7 +303,7 @@ export default function MobilePortfolio() {
           </div>
         </MobileSection>
 
-        <MobileSection id="m-experience" eyebrow="Path" title="Experience">
+        <MobileSection id="m-experience" eyebrow="Path" title="Experience" theme={theme}>
           <div className="relative pl-5">
             <div className="absolute inset-y-0 left-1 w-px bg-gradient-to-b from-sakura-pink/40 via-white/8 to-transparent" />
             <div className="space-y-5">
@@ -207,11 +321,11 @@ export default function MobilePortfolio() {
           </div>
         </MobileSection>
 
-        <MobileSection id="m-blogpost" eyebrow="Journal" title="Blogpost" showPetals>
-          <BlogPost theme="night" embedded />
+        <MobileSection id="m-blogpost" eyebrow="Journal" title="Blogpost" showPetals theme={theme}>
+          <BlogPost theme={theme} embedded />
         </MobileSection>
 
-        <MobileSection id="m-contact" eyebrow="Reach out" title="Contact" showPetals>
+        <MobileSection id="m-contact" eyebrow="Reach out" title="Contact" showPetals theme={theme}>
           <MobileContactForm />
           <div className={`${card} mt-4 space-y-3`}>
             <p className="font-jp-hand text-sm leading-relaxed text-parchment/95">Seeking AI/ML roles building calm, reliable systems that blend strong backend foundations with responsible AI delivery.</p>
@@ -245,14 +359,15 @@ export default function MobilePortfolio() {
   )
 }
 
-function MobileSection({ id, eyebrow, title, children, showPetals = false }: { id: string; eyebrow: string; title: string; children: React.ReactNode; showPetals?: boolean }) {
+function MobileSection({ id, eyebrow, title, children, showPetals = false, theme = 'night' }: { id: string; eyebrow: string; title: string; children: React.ReactNode; showPetals?: boolean; theme?: 'night' | 'day' }) {
+  const shell = theme === 'night' ? nightMobileSectionShell : dayMobileSectionShell
   return (
     <section id={id} className="py-8" aria-label={title}>
-      <div className={nightMobileSectionShell}>
-        {showPetals && <SectionSakuraRain isNight />}
+      <div className={shell}>
+        {showPetals && <SectionSakuraRain isNight={theme === 'night'} />}
         <motion.header className="relative z-10 mb-5 space-y-1" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.7, ease }}>
-          <p className="text-[0.6rem] uppercase tracking-[0.28em] text-sakura-pink/70">{eyebrow}</p>
-          <h2 className="font-heading text-xl text-parchment/90">{title}</h2>
+          <p className={`text-[0.6rem] uppercase tracking-[0.28em] ${theme === 'night' ? 'text-sakura-pink/70' : 'text-rose-500/70'}`}>{eyebrow}</p>
+          <h2 className={`font-heading text-xl ${theme === 'night' ? 'text-parchment/90' : 'text-[color:var(--dawn-text)]'}`}>{title}</h2>
         </motion.header>
         <div className="relative z-10">{children}</div>
       </div>

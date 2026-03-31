@@ -32,11 +32,11 @@ body,
 }
 
 body[data-theme='night'] {
-  @apply bg-black text-parchment scroll-smooth;
+  @apply bg-black text-parchment;
 }
 
 body[data-theme='day'] {
-  @apply bg-parchment text-ink-deep scroll-smooth;
+  @apply bg-parchment text-ink-deep;
 }
 
 /* Neon text glow utilities for header/nav */

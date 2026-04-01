@@ -60,6 +60,9 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
   const [duration, setDuration] = useState(30)
   const [expanded, setExpanded] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
+  // Stable refs for media session handlers to avoid stale closures
+  const trackCountRef = useRef(0)
+  const idxRef = useRef(0)
   const isNight = theme === 'night'
 
   // Fetch playlist once
@@ -75,6 +78,52 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
 
   const track = playlist?.tracks[idx] ?? null
   const trackCount = playlist?.tracks.length ?? 0
+  trackCountRef.current = trackCount
+  idxRef.current = idx
+
+  // Register Media Session API — keeps audio alive on lock screen
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    const ms = navigator.mediaSession
+    ms.setActionHandler('play', () => {
+      audioRef.current?.play().then(() => setPlaying(true)).catch(() => {})
+    })
+    ms.setActionHandler('pause', () => {
+      audioRef.current?.pause()
+      setPlaying(false)
+    })
+    ms.setActionHandler('previoustrack', () => {
+      const n = trackCountRef.current
+      setIdx((i) => (n > 0 ? (i - 1 + n) % n : 0))
+    })
+    ms.setActionHandler('nexttrack', () => {
+      const n = trackCountRef.current
+      setIdx((i) => (n > 0 ? (i + 1) % n : 0))
+    })
+    return () => {
+      ms.setActionHandler('play', null)
+      ms.setActionHandler('pause', null)
+      ms.setActionHandler('previoustrack', null)
+      ms.setActionHandler('nexttrack', null)
+    }
+  }, [])
+
+  // Update Media Session metadata when track changes
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !track) return
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.name,
+      artist: track.artist,
+      album: 'はまぐり · Deep Sea Picks',
+      artwork: track.albumArt ? [{ src: track.albumArt, sizes: '500x500', type: 'image/jpeg' }] : [],
+    })
+  }, [track])
+
+  // Sync playback state with OS
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'
+  }, [playing])
 
   // Load new track whenever idx changes
   useEffect(() => {

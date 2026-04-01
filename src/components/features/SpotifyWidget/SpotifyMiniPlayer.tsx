@@ -68,7 +68,9 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
     fetch(apiUrl('/api/spotify/playlist'))
       .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json() as Promise<PlaylistData> })
       .then((data) => {
-        setPlaylist({ ...data, tracks: [...data.tracks].sort(() => Math.random() - 0.5) })
+        const playable = data.tracks.filter((t) => t.previewUrl)
+        const shuffled = playable.sort(() => Math.random() - 0.5)
+        setPlaylist({ ...data, tracks: shuffled })
         setStatus('ready')
       })
       .catch(() => setStatus('error'))
@@ -130,19 +132,9 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
   const textColor = night ? '#f0e8e0' : '#1a3a46'
   const coral = '#e8927c'
 
-  if (status === 'loading') {
-    return (
-      <div className="fixed left-4 top-4 z-[60]">
-        <div className="h-12 w-12 animate-pulse rounded-full border border-white/10 bg-white/5" />
-      </div>
-    )
-  }
-
-  if (status === 'error') return null
-
   return (
     <>
-      {/* Always-present audio element */}
+      {/* Audio element always in DOM so ref is set before any effect fires */}
       <audio
         ref={audioRef}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
@@ -150,6 +142,13 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
         onEnded={() => { setPlaying(false); setCurrentTime(0); setIdx((i) => trackCount > 0 ? (i + 1) % trackCount : 0) }}
       />
 
+      {status === 'loading' && (
+        <div className="fixed left-4 top-4 z-[60]">
+          <div className="h-12 w-12 animate-pulse rounded-full border border-white/10 bg-white/5" />
+        </div>
+      )}
+
+      {status === 'ready' && (
       <div className="fixed left-4 top-4 z-[60] flex items-start gap-2">
 
         {/* ── Circle FAB ── */}
@@ -273,6 +272,7 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
           )}
         </AnimatePresence>
       </div>
+      )}
     </>
   )
 }

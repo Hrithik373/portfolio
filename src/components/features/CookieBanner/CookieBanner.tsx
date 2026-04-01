@@ -59,7 +59,6 @@ export function CookieBanner() {
                     <PolicyPill icon="🗑️" text="Auto-deleted every 12 hours" />
                     <PolicyPill icon="🔒" text="Security use only" />
                     <PolicyPill icon="🚫" text="No advertising. No analytics." />
-                    <PolicyPill icon="🌐" text="Never sold or shared" />
                   </div>
                   {consent === 'denied' && (
                     <p className="mt-1 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-amber-300/80">
@@ -88,7 +87,7 @@ export function CookieBanner() {
 
                 {/* Footnote */}
                 <p className="mt-3 text-[0.58rem] text-parchment/30">
-                  Your choice is saved locally and can be changed at any time. Data is only processed on our secure Render backend — no third-party trackers.
+                  Your choice is saved locally and can be changed at any time. IP collection is lawful under applicable Indian regulations and used solely for security.
                 </p>
               </div>
             </div>

@@ -79,53 +79,37 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
   }, [])
 
   const track = playlist?.tracks[idx] ?? null
-
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !track?.previewUrl) return
-    const wasPlaying = playing
-    audio.pause()
-    audio.src = track.previewUrl
-    audio.load()
-    setCurrentTime(0)
-    if (wasPlaying) audio.play().catch(() => setPlaying(false))
-  }, [idx]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const audio = new Audio()
-    audio.volume = 0.7
-    audioRef.current = audio
-    const onTime = () => setCurrentTime(audio.currentTime)
-    const onDur = () => setDuration(audio.duration || 30)
-    const onEnd = () => {
-      setPlaying(false)
-      setCurrentTime(0)
-      setIdx((i) => (playlist ? (i + 1) % playlist.tracks.length : 0))
-    }
-    audio.addEventListener('timeupdate', onTime)
-    audio.addEventListener('durationchange', onDur)
-    audio.addEventListener('ended', onEnd)
-    return () => {
-      audio.pause()
-      audio.removeEventListener('timeupdate', onTime)
-      audio.removeEventListener('durationchange', onDur)
-      audio.removeEventListener('ended', onEnd)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const trackCount = playlist?.tracks.length ?? 0
 
   const togglePlay = () => {
     const audio = audioRef.current
     if (!audio || !track?.previewUrl) return
-    if (!audio.src) { audio.src = track.previewUrl; audio.load() }
-    if (playing) { audio.pause(); setPlaying(false) }
-    else { audio.play().catch(() => setPlaying(false)); setPlaying(true) }
+    if (playing) {
+      audio.pause()
+      setPlaying(false)
+    } else {
+      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false))
+    }
   }
 
-  const prev = () => { if (!playlist) return; setIdx((i) => (i - 1 + playlist.tracks.length) % playlist.tracks.length) }
-  const next = () => { if (!playlist) return; setIdx((i) => (i + 1) % playlist.tracks.length) }
+  const handleEnded = () => {
+    setPlaying(false)
+    setCurrentTime(0)
+    setIdx((i) => (trackCount > 0 ? (i + 1) % trackCount : 0))
+  }
+
+  const prev = () => {
+    setPlaying(false)
+    setCurrentTime(0)
+    setIdx((i) => (trackCount > 0 ? (i - 1 + trackCount) % trackCount : 0))
+  }
+  const next = () => {
+    setPlaying(false)
+    setCurrentTime(0)
+    setIdx((i) => (trackCount > 0 ? (i + 1) % trackCount : 0))
+  }
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
-  const isDay = !isNight
   const cardBg = isNight ? 'bg-[#07161f]/92 border-[#1e4a5c]/60' : 'bg-[#e8f4f7]/95 border-[#a8cfd8]/60'
   const mutedText = isNight ? 'text-[#8ab5c0]/80' : 'text-[#4a7a8a]/80'
   const trackText = isNight ? 'text-[#f0e8e0]' : 'text-[#1a3a46]'
@@ -293,6 +277,19 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
           )}
         </AnimatePresence>
       </div>
+
+      {/* Hidden audio element — rendered in DOM for reliable mobile playback */}
+      {track?.previewUrl && (
+        <audio
+          ref={audioRef}
+          src={track.previewUrl}
+          volume={0.7}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+          onDurationChange={(e) => setDuration(e.currentTarget.duration || 30)}
+          onEnded={handleEnded}
+          onPause={() => setPlaying(false)}
+        />
+      )}
     </div>
   )
 }

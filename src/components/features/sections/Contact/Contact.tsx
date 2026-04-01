@@ -11,7 +11,6 @@ import { SectionShell } from '../SectionShell/SectionShell'
 import type { SectionProps } from '../SectionTypes'
 import { dayGlassSection, nightGlassSection } from '../sectionGlass'
 import { collectFingerprint } from '../../../../lib/fingerprint'
-import { FeatureLocked } from '../../CookieBanner/FeatureLocked'
 
 function contactCardShimmerLayer(reduced: boolean) {
   if (reduced) return null
@@ -130,10 +129,9 @@ export function Contact({ theme }: SectionProps) {
       mainAlign="start"
       backgroundVideo="https://motionbgs.com/dl/hd/2915"
     >
-      <FeatureLocked feature="Contact" theme={theme}>
       <div
         ref={gridRef}
-        className="grid min-w-0 gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
+        className="mx-auto grid w-full max-w-[54rem] min-w-0 gap-8 md:grid-cols-[1fr_0.85fr]"
       >
         <motion.form
           ref={formRef}
@@ -611,7 +609,6 @@ export function Contact({ theme }: SectionProps) {
         </motion.div>
       </div>
       <ContactProgramCards theme={theme} inputClass={inputClass} isValidEmail={isValidEmail} />
-      </FeatureLocked>
     </SectionShell>
   )
 }

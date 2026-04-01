@@ -343,9 +343,7 @@ export default function MobilePortfolio() {
         </MobileSection>
 
         <MobileSection id="m-contact" eyebrow="Reach out" title="Contact" showPetals theme={theme}>
-          <FeatureLocked feature="Contact Form" theme={theme}>
-            <MobileContactForm />
-          </FeatureLocked>
+          <MobileContactForm />
           <div className={`${card} mt-4 space-y-3`}>
             <p className="font-jp-hand text-sm leading-relaxed text-parchment/95">Seeking AI/ML roles building calm, reliable systems that blend strong backend foundations with responsible AI delivery.</p>
             <div className="grid min-w-0 grid-cols-[repeat(2,minmax(0,1fr))] gap-3">

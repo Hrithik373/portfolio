@@ -41,14 +41,14 @@ export function Contact({ theme }: SectionProps) {
     start: 'top 85%',
   })
   const formRef = useScrollReveal<HTMLFormElement>({
-    from: { opacity: 0, x: -28 },
-    to: { opacity: 1, x: 0 },
-    start: 'top 85%',
+    from: { opacity: 0, x: -48, y: 16 },
+    to: { opacity: 1, x: 0, y: 0 },
+    start: 'top 88%',
   })
   const rightColRef = useScrollReveal<HTMLDivElement>({
-    from: { opacity: 0, x: 28 },
-    to: { opacity: 1, x: 0 },
-    start: 'top 85%',
+    from: { opacity: 0, x: 48, y: 16 },
+    to: { opacity: 1, x: 0, y: 0 },
+    start: 'top 88%',
   })
   const formFieldsRef = useScrollReveal<HTMLDivElement>({
     from: { opacity: 0, y: 16 },
@@ -132,15 +132,21 @@ export function Contact({ theme }: SectionProps) {
     >
       <div
         ref={gridRef}
-        className="mx-auto grid w-full max-w-[54rem] min-w-0 gap-8 md:grid-cols-[1fr_0.85fr]"
+        className="grid min-w-0 gap-8 md:grid-cols-[1fr_0.82fr]"
       >
         <motion.form
           ref={formRef}
           className={`relative overflow-hidden p-5 text-sm ${
             isNight ? `${nightGlassSection} text-parchment/95` : `${dayGlassSection} text-[color:var(--dawn-text)]`
           }`}
-          whileHover={reduced ? undefined : { y: -3, rotate: -0.2 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+          whileHover={reduced ? undefined : {
+            y: -7,
+            rotate: -0.3,
+            boxShadow: isNight
+              ? '0 24px 60px rgba(245,198,214,0.18), 0 0 0 1px rgba(245,198,214,0.12)'
+              : '0 24px 60px rgba(244,114,182,0.16), 0 0 0 1px rgba(244,114,182,0.12)',
+          }}
+          transition={{ type: 'spring', stiffness: 280, damping: 22 }}
           onSubmit={async (event) => {
             event.preventDefault()
             if (isSending) return
@@ -425,8 +431,14 @@ export function Contact({ theme }: SectionProps) {
           className={`relative min-w-0 overflow-hidden px-6 py-6 ${
             isNight ? `${nightGlassSection} text-parchment/95` : `${dayGlassSection} text-[color:var(--dawn-text)]`
           }`}
-          whileHover={reduced ? undefined : { y: -3, rotate: 0.2 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+          whileHover={reduced ? undefined : {
+            y: -7,
+            rotate: 0.3,
+            boxShadow: isNight
+              ? '0 24px 60px rgba(245,198,214,0.18), 0 0 0 1px rgba(245,198,214,0.12)'
+              : '0 24px 60px rgba(244,114,182,0.16), 0 0 0 1px rgba(244,114,182,0.12)',
+          }}
+          transition={{ type: 'spring', stiffness: 280, damping: 22 }}
         >
           {contactCardShimmerLayer(reduced)}
           <motion.span
@@ -488,7 +500,7 @@ export function Contact({ theme }: SectionProps) {
                     : 'border-[rgba(236,72,153,0.22)] bg-[color:var(--dawn-input)] text-[color:var(--dawn-text)] hover:border-rose-300/45 hover:bg-white hover:shadow-[0_4px_20px_rgba(244,114,182,0.12)]'
                 }`}
                 href="mailto:hrithikgh29@gmail.com"
-                whileHover={reduced ? undefined : { y: -2 }}
+                whileHover={reduced ? undefined : { y: -4, scale: 1.02 }}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full border ${
@@ -521,7 +533,7 @@ export function Contact({ theme }: SectionProps) {
                     : 'border-[rgba(236,72,153,0.22)] bg-[color:var(--dawn-input)] text-[color:var(--dawn-text)] hover:border-rose-300/45 hover:bg-white hover:shadow-[0_4px_20px_rgba(244,114,182,0.12)]'
                 }`}
                 href="tel:+918420736098"
-                whileHover={reduced ? undefined : { y: -2 }}
+                whileHover={reduced ? undefined : { y: -4, scale: 1.02 }}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full border ${
@@ -556,7 +568,7 @@ export function Contact({ theme }: SectionProps) {
                 href="https://www.linkedin.com/in/hrithikgh29"
                 rel="noreferrer"
                 target="_blank"
-                whileHover={reduced ? undefined : { y: -2 }}
+                whileHover={reduced ? undefined : { y: -4, scale: 1.02 }}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full border ${
@@ -585,7 +597,7 @@ export function Contact({ theme }: SectionProps) {
                 href="https://github.com/Hrithik373"
                 rel="noreferrer"
                 target="_blank"
-                whileHover={reduced ? undefined : { y: -2 }}
+                whileHover={reduced ? undefined : { y: -4, scale: 1.02 }}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full border ${

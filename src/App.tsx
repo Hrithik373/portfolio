@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react'
 import { useIsMobile } from './hooks/useIsMobile'
 import { CookieConsentProvider } from './context/CookieConsentContext'
 import { CookieBanner } from './components/features/CookieBanner/CookieBanner'
+import { PrivacyReminderFAB } from './components/features/CookieBanner/PrivacyReminderFAB'
 
 const DesktopPortfolio = lazy(() => import('./pages/DesktopPortfolio'))
 const MobilePortfolio = lazy(() => import('./pages/MobilePortfolio'))
@@ -22,6 +23,7 @@ function App() {
         {isMobile ? <MobilePortfolio /> : <DesktopPortfolio />}
       </Suspense>
       <CookieBanner />
+      <PrivacyReminderFAB />
     </CookieConsentProvider>
   )
 }

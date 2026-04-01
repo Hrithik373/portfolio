@@ -61,6 +61,7 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
   const [expanded, setExpanded] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const trackCountRef = useRef(0)
+  const autoplayRef = useRef(false)
   const isNight = theme === 'night'
 
   // Fetch playlist once
@@ -107,13 +108,26 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'
   }, [playing])
 
-  // Load new src whenever track changes
+  // Load new src whenever track changes, autoplay if previous track ended
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    audio.pause(); setPlaying(false); setCurrentTime(0)
-    if (track?.previewUrl) { audio.src = track.previewUrl; audio.volume = 0.7; audio.load() }
-    else audio.src = ''
+    audio.pause()
+    setCurrentTime(0)
+    if (track?.previewUrl) {
+      audio.src = track.previewUrl
+      audio.volume = 0.7
+      audio.load()
+      if (autoplayRef.current) {
+        autoplayRef.current = false
+        audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false))
+      } else {
+        setPlaying(false)
+      }
+    } else {
+      audio.src = ''
+      setPlaying(false)
+    }
   }, [idx, track?.previewUrl])
 
   const togglePlay = () => {
@@ -139,7 +153,7 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
         ref={audioRef}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
         onDurationChange={(e) => setDuration(e.currentTarget.duration || 30)}
-        onEnded={() => { setPlaying(false); setCurrentTime(0); setIdx((i) => trackCount > 0 ? (i + 1) % trackCount : 0) }}
+        onEnded={() => { autoplayRef.current = true; setIdx((i) => trackCount > 0 ? (i + 1) % trackCount : 0) }}
       />
 
       {status === 'loading' && (

@@ -217,6 +217,8 @@ export default function MobilePortfolio() {
         </div>
       )}
 
+      <SpotifyMiniPlayer theme={theme} />
+
       <AnimatePresence>
         {showLoader && (
           <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black" exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
@@ -245,9 +247,6 @@ export default function MobilePortfolio() {
             <button type="button" onClick={() => scrollTo('m-experience')} className="rounded-full border border-white/[0.14] bg-white/[0.05] px-4 py-2.5 text-xs font-medium tracking-wide text-parchment/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] active:scale-95 sm:px-5">Career timeline</button>
             <a href="/hrithikgh_resume.pdf" download="hrithikgh_resume.pdf" className="rounded-full border border-ink-red/70 bg-black/60 px-4 py-2.5 text-xs font-medium tracking-wide text-parchment/80 active:scale-95 sm:px-5">My résumé · PDF</a>
           </div>
-          {/* Spotify — Japanese hamaguri player */}
-          <SpotifyMiniPlayer theme={theme} />
-
           {/* petals as sibling outside the card's backdrop-blur */}
           <FeatureLocked feature="Voice Note" theme={theme}>
             <div className="relative">

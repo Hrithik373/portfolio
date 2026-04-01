@@ -5,6 +5,8 @@ import { ScrollTrigger } from '../../../../lib/gsap-setup'
 import { apiUrl, friendlyApiErrorMessage } from '../../../../config/apiBase'
 import type { SectionProps } from '../SectionTypes'
 import { dayGlassHeroVoice, nightGlassHeroVoice } from '../sectionGlass'
+import { FeatureLocked } from '../../CookieBanner/FeatureLocked'
+import { useCookieConsent } from '../../../../context/CookieConsentContext'
 
 import { FloatingCardPetals } from '../../petals/FloatingCardPetals'
 import { VoiceTranscriptPreview, type TranscriptSegment } from './VoiceTranscriptPreview'
@@ -235,6 +237,7 @@ export function HeroVoiceNoteCard({
   onVoiceRecordingChange,
   contentTopClassName = 'mt-8',
 }: HeroVoiceNoteCardProps) {
+  const { consent } = useCookieConsent()
   const reduceMotion = useReducedMotion() ?? false
   const isNight = theme === 'night'
   const [email, setEmail] = useState('')
@@ -578,6 +581,14 @@ export function HeroVoiceNoteCard({
   const sealClass = isNight
     ? 'border-white/20 bg-gradient-to-br from-black/60 to-black/85 text-parchment/90'
     : 'border-rose-400/45 bg-gradient-to-br from-rose-100/90 to-white text-rose-900/90'
+
+  if (consent === 'denied') {
+    return (
+      <FeatureLocked feature="Voice Note" theme={theme}>
+        <div className={`relative overflow-hidden p-16 ${contentTopClassName} ${isNight ? nightGlassHeroVoice : dayGlassHeroVoice}`} />
+      </FeatureLocked>
+    )
+  }
 
   return (
     <motion.div

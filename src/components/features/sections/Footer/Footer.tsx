@@ -2,6 +2,22 @@ import { useEffect, useRef } from 'react'
 import { gsap, ScrollTrigger } from '../../../../lib/gsap-setup'
 import { useScrollReveal } from '../../../../hooks/useScrollAnimation'
 import { dayGlassSection, nightGlassSection } from '../sectionGlass'
+import { useCookieConsent } from '../../../../context/CookieConsentContext'
+
+function FooterCookieLink({ isNight }: { isNight: boolean }) {
+  const { reopen, consent } = useCookieConsent()
+  return (
+    <button
+      type="button"
+      onClick={reopen}
+      className={`text-[0.62rem] underline-offset-2 transition-colors hover:underline ${
+        isNight ? 'text-parchment/30 hover:text-parchment/55' : 'text-[color:var(--dawn-muted)] opacity-60 hover:opacity-100'
+      }`}
+    >
+      {consent === 'denied' ? '🔒 Cookie settings (features limited)' : 'Cookie & privacy settings'}
+    </button>
+  )
+}
 
 export function Footer({ theme }: { theme: 'night' | 'day' }) {
   const isNight = theme === 'night'
@@ -41,14 +57,17 @@ export function Footer({ theme }: { theme: 'night' | 'day' }) {
           interfaces.
         </p>
       </div>
-      <p
-        ref={copyrightRef}
-        className={`text-[0.68rem] ${
-          isNight ? 'text-parchment/50' : 'text-[color:var(--dawn-text)]'
-        }`}
-      >
-        © {new Date().getFullYear()} Hrithik Ghosh. Built with care.
-      </p>
+      <div className="flex flex-wrap items-center gap-4">
+        <p
+          ref={copyrightRef}
+          className={`text-[0.68rem] ${
+            isNight ? 'text-parchment/50' : 'text-[color:var(--dawn-text)]'
+          }`}
+        >
+          © {new Date().getFullYear()} Hrithik Ghosh. Built with care.
+        </p>
+        <FooterCookieLink isNight={isNight} />
+      </div>
     </footer>
   )
 }

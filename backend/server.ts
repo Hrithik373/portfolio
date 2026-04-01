@@ -231,6 +231,61 @@ app.get('/api/spotify/playlist', (_req, res) => {
   })
 })
 
+/* ── 12-hour data purge — runs on startup + every hour ── */
+async function purgeOldData() {
+  const cutoff = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+
+  try {
+    // 1. Visitors
+    const visitors = await loadData<VisitorRecord[]>('visitors', [])
+    const freshVisitors = visitors.filter((v) => v.timestamp >= cutoff)
+    if (freshVisitors.length < visitors.length) {
+      await saveData('visitors', freshVisitors)
+      console.log(`[Purge] Visitors: removed ${visitors.length - freshVisitors.length} records older than 12 h`)
+    }
+  } catch (e) { console.error('[Purge] visitor error:', e) }
+
+  try {
+    // 2. Abuse log — attemptLog entries + per-IP history entries
+    type AbuseMin = {
+      records: Record<string, { history: { time: string }[] }>
+      fingerprintMap: Record<string, unknown>
+      attemptLog: { timestamp: string }[]
+      totalBlocked: number
+      lastUpdated: string
+    }
+    const abuse = await loadData<AbuseMin>('abuse-log', { records: {}, fingerprintMap: {}, attemptLog: [], totalBlocked: 0, lastUpdated: cutoff })
+    const freshAttempts = abuse.attemptLog.filter((a) => a.timestamp >= cutoff)
+    for (const rec of Object.values(abuse.records)) {
+      rec.history = rec.history.filter((h) => h.time >= cutoff)
+    }
+    if (freshAttempts.length < abuse.attemptLog.length) {
+      await saveData('abuse-log', { ...abuse, attemptLog: freshAttempts, lastUpdated: new Date().toISOString() })
+      console.log(`[Purge] Abuse log: removed ${abuse.attemptLog.length - freshAttempts.length} entries older than 12 h`)
+    }
+  } catch (e) { console.error('[Purge] abuse error:', e) }
+
+  try {
+    // 3. Device intel — sighting logs per device
+    type DeviceMin = { devices: Record<string, { sightingLog: { time: string }[] }> }
+    const intel = await loadData<DeviceMin>('device-intel', { devices: {} })
+    let prunedSightings = 0
+    for (const dev of Object.values(intel.devices)) {
+      const before = dev.sightingLog.length
+      dev.sightingLog = dev.sightingLog.filter((s) => s.time >= cutoff)
+      prunedSightings += before - dev.sightingLog.length
+    }
+    if (prunedSightings > 0) {
+      await saveData('device-intel', intel)
+      console.log(`[Purge] Device intel: removed ${prunedSightings} sighting entries older than 12 h`)
+    }
+  } catch (e) { console.error('[Purge] device error:', e) }
+}
+
+// Run immediately on startup, then every hour
+void purgeOldData()
+setInterval(() => void purgeOldData(), 60 * 60 * 1000)
+
 /* ── Pipeline routes LAST — won't override routes above ── */
 registerPipelineRoutes(app)
 

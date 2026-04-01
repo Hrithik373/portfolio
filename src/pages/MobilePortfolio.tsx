@@ -15,6 +15,8 @@ import { HeroVoiceNoteCard } from '../components/features/sections/Hero/HeroVoic
 import { dayGlassSection, dayMobileSectionShell, nightGlassSection, nightMobileSectionShell } from '../components/features/sections/sectionGlass'
 import { collectFingerprint } from '../lib/fingerprint'
 import { SpotifyMiniPlayer } from '../components/features/SpotifyWidget/SpotifyMiniPlayer'
+import { FeatureLocked } from '../components/features/CookieBanner/FeatureLocked'
+import { useCookieConsent } from '../context/CookieConsentContext'
 
 
 const sections = [
@@ -247,14 +249,16 @@ export default function MobilePortfolio() {
           <SpotifyMiniPlayer theme={theme} />
 
           {/* petals as sibling outside the card's backdrop-blur */}
-          <div className="relative">
-            <VoiceCardPetals isNight={isNight} />
-            <HeroVoiceNoteCard
-              theme={theme}
-              onVoiceStreamChange={setVoiceStream}
-              onVoiceRecordingChange={setVoiceLive}
-            />
-          </div>
+          <FeatureLocked feature="Voice Note" theme={theme}>
+            <div className="relative">
+              <VoiceCardPetals isNight={isNight} />
+              <HeroVoiceNoteCard
+                theme={theme}
+                onVoiceStreamChange={setVoiceStream}
+                onVoiceRecordingChange={setVoiceLive}
+              />
+            </div>
+          </FeatureLocked>
         </motion.section>
 
         <MobileSection id="m-about" eyebrow="Story" title="About" showPetals theme={theme}>
@@ -339,7 +343,9 @@ export default function MobilePortfolio() {
         </MobileSection>
 
         <MobileSection id="m-contact" eyebrow="Reach out" title="Contact" showPetals theme={theme}>
-          <MobileContactForm />
+          <FeatureLocked feature="Contact Form" theme={theme}>
+            <MobileContactForm />
+          </FeatureLocked>
           <div className={`${card} mt-4 space-y-3`}>
             <p className="font-jp-hand text-sm leading-relaxed text-parchment/95">Seeking AI/ML roles building calm, reliable systems that blend strong backend foundations with responsible AI delivery.</p>
             <div className="grid min-w-0 grid-cols-[repeat(2,minmax(0,1fr))] gap-3">
@@ -349,12 +355,15 @@ export default function MobilePortfolio() {
               <ContactLink href="https://github.com/Hrithik373" label="GitHub" value="Hrithik373" />
             </div>
           </div>
-          <MobileContactPrograms />
+          <FeatureLocked feature="Program Enquiry" theme={theme}>
+            <MobileContactPrograms />
+          </FeatureLocked>
         </MobileSection>
 
         <footer ref={footerRef} className="mt-10 space-y-3 px-1 pb-4 text-center">
           <div className="mx-auto h-px w-2/3 bg-gradient-to-r from-transparent via-sakura-pink/30 to-transparent" />
           <p className="text-[0.65rem] text-parchment/50">&copy; {new Date().getFullYear()} Hrithik Ghosh. Built with care.</p>
+          <MobileCookieSettingsLink />
         </footer>
       </main>
 
@@ -449,4 +458,17 @@ function MobileContactForm() {
 
 function ContactLink({ href, label, value }: { href: string; label: string; value: string }) {
   return <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined} className={`flex min-w-0 flex-col gap-0.5 ${nightGlassSection} px-3 py-3 text-parchment/95 active:scale-[0.97]`}><span className="text-[0.55rem] uppercase tracking-[0.18em] text-parchment/50">{label}</span><span className="truncate text-[0.68rem] font-medium">{value}</span></a>
+}
+
+function MobileCookieSettingsLink() {
+  const { reopen, consent } = useCookieConsent()
+  return (
+    <button
+      type="button"
+      onClick={reopen}
+      className="text-[0.58rem] text-parchment/30 underline-offset-2 hover:text-parchment/50 hover:underline transition-colors"
+    >
+      {consent === 'denied' ? '🔒 Cookie settings (features limited)' : 'Cookie & privacy settings'}
+    </button>
+  )
 }

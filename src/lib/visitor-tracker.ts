@@ -1,9 +1,12 @@
 import { collectFingerprint } from './fingerprint'
 import { apiUrl } from '../config/apiBase'
+import { getConsent } from './cookie-consent'
 
 let tracked = false
 
 export async function trackVisitor(page: 'desktop' | 'mobile') {
+  // Only track when the user has explicitly accepted — never on denial or pending
+  if (getConsent() !== 'accepted') return
   if (tracked) return
   tracked = true
 

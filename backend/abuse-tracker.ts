@@ -17,14 +17,11 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express'
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { join } from 'path'
 import { ipBlocklist } from './security'
+import { loadData, saveData } from './redis-store'
 
 /* ── Config ── */
 const ADMIN_PASSWORD = process.env.ABUSE_ADMIN_PASSWORD || 'changeme-in-env'
-const LOG_DIR = join(process.cwd(), 'data')
-const LOG_FILE = join(LOG_DIR, 'abuse-log.json')
 const ESCALATION_WINDOW_MS = 6 * 60 * 60 * 1000
 
 /* Thresholds */
@@ -72,32 +69,22 @@ interface AbuseStore {
 }
 
 /* ── Persistence ── */
-function loadStore(): AbuseStore {
-  try {
-    if (existsSync(LOG_FILE)) {
-      const raw = readFileSync(LOG_FILE, 'utf-8')
-      const parsed = JSON.parse(raw) as AbuseStore
-      if (!parsed.attemptLog) parsed.attemptLog = []
-      return parsed
-    }
-  } catch (err) {
-    console.error('[Abuse] Failed to load log:', err)
-  }
-  return { records: {}, fingerprintMap: {}, attemptLog: [], totalBlocked: 0, lastUpdated: new Date().toISOString() }
-}
+const EMPTY_STORE: AbuseStore = { records: {}, fingerprintMap: {}, attemptLog: [], totalBlocked: 0, lastUpdated: new Date().toISOString() }
 
 function saveStore(s: AbuseStore): void {
-  try {
-    if (!existsSync(LOG_DIR)) mkdirSync(LOG_DIR, { recursive: true })
-    s.lastUpdated = new Date().toISOString()
-    if (s.attemptLog.length > 1000) s.attemptLog = s.attemptLog.slice(-1000)
-    writeFileSync(LOG_FILE, JSON.stringify(s, null, 2), 'utf-8')
-  } catch (err) {
-    console.error('[Abuse] Failed to save log:', err)
-  }
+  s.lastUpdated = new Date().toISOString()
+  if (s.attemptLog.length > 1000) s.attemptLog = s.attemptLog.slice(-1000)
+  void saveData('abuse-log', s)
 }
 
-let store = loadStore()
+let store: AbuseStore = { ...EMPTY_STORE }
+
+void loadData<AbuseStore>('abuse-log', EMPTY_STORE).then((s) => {
+  if (!s.attemptLog) s.attemptLog = []
+  store = s
+  console.log('[Abuse] Store loaded from Redis')
+})
+
 setInterval(() => saveStore(store), 5 * 60 * 1000)
 
 /* ── Email Alert System ── */

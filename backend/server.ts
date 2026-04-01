@@ -1,7 +1,6 @@
 import 'dotenv/config'
-import fs from 'fs'
-import path from 'path'
 import express from 'express'
+import { loadData, saveData } from './redis-store'
 
 import { applySecurity } from './security'
 import { abuseTracker, abuseAdminRouter } from './abuse-tracker'
@@ -56,18 +55,6 @@ type DeviceEntry = {
   lastSeen: string
 }
 
-const VISITOR_FILE = path.join(process.cwd(), 'data', 'visitors.json')
-const DATA_DIR = path.join(process.cwd(), 'data')
-
-function readVisitors(): VisitorRecord[] {
-  try {
-    if (fs.existsSync(VISITOR_FILE)) {
-      return JSON.parse(fs.readFileSync(VISITOR_FILE, 'utf-8')) as VisitorRecord[]
-    }
-  } catch { /* ignore */ }
-  return []
-}
-
 /* ── Visitor tracking — no auth, silent fail ── */
 app.post('/api/visitor', express.json({ limit: '10kb' }), (req, res) => {
   try {
@@ -97,11 +84,16 @@ app.post('/api/visitor', express.json({ limit: '10kb' }), (req, res) => {
       fingerprint: _fp ?? null,
     }
 
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
-    let visitors = readVisitors()
-    visitors.push(record)
-    if (visitors.length > 1000) visitors = visitors.slice(-1000)
-    fs.writeFileSync(VISITOR_FILE, JSON.stringify(visitors, null, 2), 'utf-8')
+    void (async () => {
+      try {
+        let visitors = await loadData<VisitorRecord[]>('visitors', [])
+        visitors.push(record)
+        if (visitors.length > 1000) visitors = visitors.slice(-1000)
+        await saveData('visitors', visitors)
+      } catch (err) {
+        console.error('[Visitor] Save error:', err)
+      }
+    })()
 
     console.log(`[Visitor] ${record.page} | IP: ${ip} | Device: ${record.fingerprint?.deviceId?.slice(0, 12) ?? 'no-fp'}... | ${ua.slice(0, 50)}`)
     res.json({ ok: true })
@@ -112,7 +104,7 @@ app.post('/api/visitor', express.json({ limit: '10kb' }), (req, res) => {
 })
 
 /* ── Visitor admin — requires Bearer auth ── */
-app.get('/api/admin/visitors', (req, res) => {
+app.get('/api/admin/visitors', async (req, res) => {
   const auth = req.headers.authorization
   const ADMIN_PASSWORD = process.env.ABUSE_ADMIN_PASSWORD ?? 'changeme-in-env'
   if (!auth || auth !== `Bearer ${ADMIN_PASSWORD}`) {
@@ -120,7 +112,7 @@ app.get('/api/admin/visitors', (req, res) => {
     return
   }
 
-  const visitors = readVisitors()
+  const visitors = await loadData<VisitorRecord[]>('visitors', [])
   const uniqueIPs = new Set(visitors.map((v) => v.ip))
   const uniqueDevices = new Set(visitors.filter((v) => v.fingerprint?.deviceId).map((v) => v.fingerprint!.deviceId))
   const desktopCount = visitors.filter((v) => v.page === 'desktop').length

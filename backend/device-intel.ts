@@ -20,12 +20,9 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express'
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { join } from 'path'
+import { loadData, saveData } from './redis-store'
 
 /* ── Config ── */
-const DATA_DIR = join(process.cwd(), 'data')
-const DEVICE_FILE = join(DATA_DIR, 'device-intel.json')
 const ADMIN_PASSWORD = process.env.ABUSE_ADMIN_PASSWORD || 'changeme-in-env'
 
 /* ── Known VPN/Datacenter ASN patterns ── */
@@ -149,46 +146,32 @@ interface DeviceStore {
 }
 
 /* ── Persistence ── */
-function loadDeviceStore(): DeviceStore {
-  try {
-    if (existsSync(DEVICE_FILE)) {
-      const raw = readFileSync(DEVICE_FILE, 'utf-8')
-      const parsed = JSON.parse(raw) as DeviceStore
-      // Ensure newer fields exist for older stores
-      if (!parsed.voiceNoteStats) {
-        parsed.voiceNoteStats = { totalSubmissions: 0, uniqueDevices: 0, uniqueIPs: 0, blockedAttempts: 0, deviceIds: [] }
-      }
-      if (!parsed.blockedDevices) parsed.blockedDevices = []
-      return parsed
-    }
-  } catch (err) {
-    console.error('[DeviceIntel] Failed to load store:', err)
-  }
-  return {
-    devices: {}, deviceToIPs: {}, ipToDevices: {},
-    leakedIPToDevices: {},
-    voiceNoteStats: { totalSubmissions: 0, uniqueDevices: 0, uniqueIPs: 0, blockedAttempts: 0, deviceIds: [] },
-    blockedDevices: [],
-    totalDevices: 0, totalSightings: 0,
-    lastUpdated: new Date().toISOString(),
-  }
+const EMPTY_DEVICE_STORE: DeviceStore = {
+  devices: {}, deviceToIPs: {}, ipToDevices: {},
+  leakedIPToDevices: {},
+  voiceNoteStats: { totalSubmissions: 0, uniqueDevices: 0, uniqueIPs: 0, blockedAttempts: 0, deviceIds: [] },
+  blockedDevices: [],
+  totalDevices: 0, totalSightings: 0,
+  lastUpdated: new Date().toISOString(),
 }
 
 function saveDeviceStore(s: DeviceStore): void {
-  try {
-    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true })
-    s.lastUpdated = new Date().toISOString()
-    // Cap sighting logs per device
-    for (const d of Object.values(s.devices)) {
-      if (d.sightingLog.length > 200) d.sightingLog = d.sightingLog.slice(-200)
-    }
-    writeFileSync(DEVICE_FILE, JSON.stringify(s, null, 2), 'utf-8')
-  } catch (err) {
-    console.error('[DeviceIntel] Failed to save store:', err)
+  s.lastUpdated = new Date().toISOString()
+  for (const d of Object.values(s.devices)) {
+    if (d.sightingLog.length > 200) d.sightingLog = d.sightingLog.slice(-200)
   }
+  void saveData('device-intel', s)
 }
 
-const deviceStore = loadDeviceStore()
+const deviceStore: DeviceStore = { ...EMPTY_DEVICE_STORE }
+
+void loadData<DeviceStore>('device-intel', EMPTY_DEVICE_STORE).then((s) => {
+  if (!s.voiceNoteStats) s.voiceNoteStats = { totalSubmissions: 0, uniqueDevices: 0, uniqueIPs: 0, blockedAttempts: 0, deviceIds: [] }
+  if (!s.blockedDevices) s.blockedDevices = []
+  Object.assign(deviceStore, s)
+  console.log('[DeviceIntel] Store loaded from Redis')
+})
+
 setInterval(() => saveDeviceStore(deviceStore), 5 * 60 * 1000)
 
 /* ── Parse _fp from either JSON body or multipart string field ── */

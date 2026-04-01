@@ -38,9 +38,13 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false  # Upstash Redis REST URL — set in Render dashboard
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false  # Upstash Redis REST token — set in Render dashboard
     autoDeploy: true
     # Free tier spins down after 15 min inactivity — first request takes ~30s.
     # Consider UptimeRobot (free) to ping /api/health every 14 min to stay warm.
-    # NOTE: Free tier has an ephemeral filesystem — data/visitors.json is wiped on
-    # each restart/deploy. Upgrade to a Render Persistent Disk ($0.25/GB/month)
-    # or migrate visitors.json to Upstash Redis if you need durable visitor data.
+    # NOTE: Free tier has an ephemeral filesystem — all persistent data (abuse log,
+    # device intel, visitors) is stored in Upstash Redis. Set UPSTASH_REDIS_REST_URL
+    # and UPSTASH_REDIS_REST_TOKEN in the Render dashboard before deploying.

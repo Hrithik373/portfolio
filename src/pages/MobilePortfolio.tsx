@@ -14,6 +14,7 @@ import { HeroAudioOrnament } from '../components/features/sections/Hero/HeroAudi
 import { HeroVoiceNoteCard } from '../components/features/sections/Hero/HeroVoiceNoteCard'
 import { dayGlassSection, dayMobileSectionShell, nightGlassSection, nightMobileSectionShell } from '../components/features/sections/sectionGlass'
 import { collectFingerprint } from '../lib/fingerprint'
+import { SpotifyMiniPlayer } from '../components/features/SpotifyWidget/SpotifyMiniPlayer'
 
 
 const sections = [
@@ -242,6 +243,9 @@ export default function MobilePortfolio() {
             <button type="button" onClick={() => scrollTo('m-experience')} className="rounded-full border border-white/[0.14] bg-white/[0.05] px-4 py-2.5 text-xs font-medium tracking-wide text-parchment/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] active:scale-95 sm:px-5">Career timeline</button>
             <a href="/hrithikgh_resume.pdf" download="hrithikgh_resume.pdf" className="rounded-full border border-ink-red/70 bg-black/60 px-4 py-2.5 text-xs font-medium tracking-wide text-parchment/80 active:scale-95 sm:px-5">My résumé · PDF</a>
           </div>
+          {/* Spotify — Japanese hamaguri player */}
+          <SpotifyMiniPlayer theme={theme} />
+
           {/* petals as sibling outside the card's backdrop-blur */}
           <div className="relative">
             <VoiceCardPetals isNight={isNight} />

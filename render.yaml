@@ -42,6 +42,12 @@ services:
         sync: false  # Upstash Redis REST URL — set in Render dashboard
       - key: UPSTASH_REDIS_REST_TOKEN
         sync: false  # Upstash Redis REST token — set in Render dashboard
+      - key: SPOTIFY_CLIENT_ID
+        sync: false  # Spotify app client ID — create app at developer.spotify.com
+      - key: SPOTIFY_CLIENT_SECRET
+        sync: false  # Spotify app client secret
+      - key: SPOTIFY_PLAYLIST_ID
+        sync: false  # Public playlist ID to display (e.g. 37i9dQZF1DX... from the URL)
     autoDeploy: true
     # Free tier spins down after 15 min inactivity — first request takes ~30s.
     # Consider UptimeRobot (free) to ping /api/health every 14 min to stay warm.

@@ -62,7 +62,24 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
   const audioRef = useRef<HTMLAudioElement>(null)
   const trackCountRef = useRef(0)
   const autoplayRef = useRef(false)
+  const playerRef = useRef<HTMLDivElement>(null)
   const isNight = theme === 'night'
+
+  // Close panel on outside tap
+  useEffect(() => {
+    if (!expanded) return
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (playerRef.current && !playerRef.current.contains(e.target as Node)) {
+        setExpanded(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
+  }, [expanded])
 
   // Fetch playlist once
   useEffect(() => {
@@ -163,7 +180,7 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
       )}
 
       {status === 'ready' && (
-      <div className="fixed left-4 top-4 z-[60] flex items-start gap-2">
+      <div ref={playerRef} className="fixed left-4 top-4 z-[60] flex items-start gap-2">
 
         {/* ── Circle FAB ── */}
         <button

@@ -209,25 +209,21 @@ app.post('/api/transcribe-preview', voiceUpload.single('audio'), (req, res) => {
   void transcribePreviewHandler(req, res)
 })
 
-/* ── Spotify playlist — public, cached 5 min ── */
+/* ── Deezer playlist — public, no API key, cached 5 min ── */
+const DEEZER_PLAYLIST_ID = process.env.DEEZER_PLAYLIST_ID ?? '3884439882'
 const spotifyCache: { data: unknown; expiresAt: number } = { data: null, expiresAt: 0 }
 app.get('/api/spotify/playlist', (_req, res) => {
-  const playlistId = process.env.SPOTIFY_PLAYLIST_ID
-  if (!playlistId) {
-    res.status(503).json({ error: 'SPOTIFY_PLAYLIST_ID not configured' })
-    return
-  }
   if (spotifyCache.data && Date.now() < spotifyCache.expiresAt) {
     res.json(spotifyCache.data)
     return
   }
-  void getPlaylistData(playlistId).then((data) => {
+  void getPlaylistData(DEEZER_PLAYLIST_ID).then((data) => {
     spotifyCache.data = data
     spotifyCache.expiresAt = Date.now() + 5 * 60 * 1000
     res.json(data)
   }).catch((err: unknown) => {
-    console.error('[Spotify]', err)
-    res.status(502).json({ error: 'Failed to fetch playlist from Spotify' })
+    console.error('[Deezer]', err)
+    res.status(502).json({ error: 'Failed to fetch playlist from Deezer' })
   })
 })
 

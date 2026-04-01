@@ -115,12 +115,7 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
 
   const togglePlay = () => {
     const audio = audioRef.current
-    // No preview available — open in Spotify instead
-    if (!track?.previewUrl) {
-      if (track?.spotifyUrl) window.open(track.spotifyUrl, '_blank', 'noreferrer')
-      return
-    }
-    if (!audio) return
+    if (!audio || !track?.previewUrl) return
     if (!audio.src) { audio.src = track.previewUrl; audio.load() }
     if (playing) { audio.pause(); setPlaying(false) }
     else { audio.play().catch(() => setPlaying(false)); setPlaying(true) }
@@ -242,10 +237,7 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
                   <div className="min-w-0">
                     <p className={`truncate text-[0.72rem] font-semibold leading-tight ${trackText}`}>{track?.name ?? '—'}</p>
                     <p className={`truncate text-[0.6rem] mt-0.5 ${mutedText}`}>{track?.artist ?? ''}</p>
-                    {track?.previewUrl
-                      ? <p className={`text-[0.52rem] mt-0.5 tabular-nums ${mutedText} opacity-60`}>{formatTime(currentTime)} / {formatTime(duration)}</p>
-                      : <p className={`text-[0.52rem] mt-0.5 ${mutedText} opacity-50`}>tap ▶ to open in Spotify</p>
-                    }
+                    <p className={`text-[0.52rem] mt-0.5 tabular-nums ${mutedText} opacity-60`}>{formatTime(currentTime)} / {formatTime(duration)}</p>
                   </div>
                 </div>
 
@@ -277,25 +269,18 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
                     <button
                       type="button"
                       onClick={togglePlay}
-                      aria-label={track?.previewUrl ? (playing ? 'Pause' : 'Play') : 'Open in Spotify'}
-                      title={track?.previewUrl ? undefined : 'No preview — opens Spotify'}
-                      className="rounded-full p-2 transition-all"
+                      disabled={!track?.previewUrl}
+                      aria-label={playing ? 'Pause' : 'Play'}
+                      className="rounded-full p-2 transition-all disabled:opacity-30"
                       style={{
                         background: isNight ? 'rgba(232,146,124,0.15)' : 'rgba(192,96,74,0.12)',
                         border: `1px solid ${isNight ? 'rgba(232,146,124,0.4)' : 'rgba(192,96,74,0.35)'}`,
                         color: isNight ? '#e8927c' : '#c0604a',
                       }}
                     >
-                      {!track?.previewUrl ? (
-                        /* Spotify logo — opens app */
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.622.622 0 01-.277-1.215c3.809-.87 7.077-.496 9.712 1.115a.622.622 0 01.207.857zm1.224-2.722a.78.78 0 01-1.072.257C13.857 12.16 10.71 11.7 7.65 12.58a.781.781 0 01-.45-1.493c3.465-.943 7.013-.487 9.353 1.543a.78.78 0 01.257 1.072zm.105-2.835C14.692 9.15 9.375 8.973 6.332 9.89a.937.937 0 11-.543-1.794c3.493-1.059 9.3-.854 12.972 1.378a.937.937 0 01-.946 1.393z" />
-                        </svg>
-                      ) : playing ? (
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                      ) : (
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                      )}
+                      {playing
+                        ? <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                        : <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>}
                     </button>
                     <button type="button" onClick={next} className={`rounded-full p-1.5 transition-colors ${isNight ? 'text-[#8ab5c0] hover:bg-white/10' : 'text-[#4a7a8a] hover:bg-black/10'}`} aria-label="Next">
                       <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z" /></svg>

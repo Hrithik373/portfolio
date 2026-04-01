@@ -1,13 +1,8 @@
 /**
- * Spotify Client Credentials pipeline
- * Fetches public playlist data — no user login required.
- * Token is cached in-memory (valid 1 hour).
+ * Deezer public playlist pipeline — no API key required.
+ * Fetches public playlist data via Deezer's open API.
+ * Returns the same shape as before so the frontend needs no changes.
  */
-
-interface SpotifyToken {
-  access_token: string
-  expires_at: number
-}
 
 export interface SpotifyTrackItem {
   id: string
@@ -28,92 +23,39 @@ export interface SpotifyPlaylistData {
   tracks: SpotifyTrackItem[]
 }
 
-let tokenCache: SpotifyToken | null = null
-
-async function getAccessToken(): Promise<string> {
-  if (tokenCache && Date.now() < tokenCache.expires_at) {
-    return tokenCache.access_token
-  }
-
-  const clientId = process.env.SPOTIFY_CLIENT_ID
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-  if (!clientId || !clientSecret) {
-    throw new Error('SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET must be set')
-  }
-
-  const creds = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${creds}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-  })
-
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Spotify token request failed (${res.status}): ${text}`)
-  }
-
-  const data = (await res.json()) as { access_token: string; expires_in: number }
-  // Expire 60 s early to avoid edge-case stale tokens
-  tokenCache = {
-    access_token: data.access_token,
-    expires_at: Date.now() + (data.expires_in - 60) * 1000,
-  }
-
-  return tokenCache.access_token
-}
-
 export async function getPlaylistData(playlistId: string): Promise<SpotifyPlaylistData> {
-  const token = await getAccessToken()
+  const url = `https://api.deezer.com/playlist/${encodeURIComponent(playlistId)}`
 
-  // Request only the fields we need to keep the response small
-  const fields = [
-    'id', 'name', 'description', 'images', 'external_urls',
-    'tracks.items(track(id,name,artists(name),album(images),preview_url,external_urls,duration_ms))',
-  ].join(',')
-
-  const url =
-    `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}` +
-    `?fields=${encodeURIComponent(fields)}&market=IN`
-
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-
+  const res = await fetch(url)
   if (!res.ok) {
-    throw new Error(`Spotify playlist fetch failed (${res.status}) for playlist ${playlistId}`)
+    throw new Error(`Deezer playlist fetch failed (${res.status}) for playlist ${playlistId}`)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = (await res.json()) as any
 
+  if (data.error) {
+    throw new Error(`Deezer API error: ${JSON.stringify(data.error)}`)
+  }
+
   return {
-    id: data.id as string,
-    name: data.name as string,
+    id: String(data.id),
+    name: data.title as string,
     description: (data.description as string) || '',
-    image: (data.images?.[0]?.url as string) ?? null,
-    externalUrl:
-      (data.external_urls?.spotify as string) ??
-      `https://open.spotify.com/playlist/${playlistId}`,
-    tracks: ((data.tracks?.items ?? []) as unknown[])
+    image: (data.picture_big as string) ?? (data.picture as string) ?? null,
+    externalUrl: (data.link as string) ?? `https://www.deezer.com/playlist/${playlistId}`,
+    tracks: ((data.tracks?.data ?? []) as unknown[])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((item: any) => item?.track?.id)
+      .filter((t: any) => t?.id)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((item: any): SpotifyTrackItem => {
-        const t = item.track
-        return {
-          id: t.id as string,
-          name: t.name as string,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          artist: ((t.artists ?? []) as any[]).map((a: any) => a.name as string).join(', ') || 'Unknown',
-          albumArt: (t.album?.images?.[0]?.url as string) ?? null,
-          previewUrl: (t.preview_url as string | null) ?? null,
-          spotifyUrl: (t.external_urls?.spotify as string) ?? '',
-          durationMs: (t.duration_ms as number) ?? 0,
-        }
-      }),
+      .map((t: any): SpotifyTrackItem => ({
+        id: String(t.id),
+        name: t.title as string,
+        artist: (t.artist?.name as string) || 'Unknown',
+        albumArt: (t.album?.cover_big as string) ?? (t.album?.cover as string) ?? null,
+        previewUrl: (t.preview as string) || null,
+        spotifyUrl: (t.link as string) ?? `https://www.deezer.com/track/${t.id}`,
+        durationMs: ((t.duration as number) ?? 0) * 1000,
+      })),
   }
 }

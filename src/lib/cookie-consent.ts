@@ -1,7 +1,14 @@
 export type ConsentState = 'accepted' | 'denied' | null
 
-const KEY = 'hg_cookie_consent'
-const KEY_AT = 'hg_cookie_consent_at'
+// Bump this version string to force all existing users to re-consent
+// (old key is automatically cleared on load)
+const VERSION = 'v2'
+const KEY = `hg_cookie_consent_${VERSION}`
+const KEY_AT = `hg_cookie_consent_at_${VERSION}`
+
+// Clear any stale keys from previous versions on first load
+const STALE_KEYS = ['hg_cookie_consent', 'hg_cookie_consent_at', 'hg_cookie_consent_v1', 'hg_cookie_consent_at_v1']
+try { STALE_KEYS.forEach((k) => localStorage.removeItem(k)) } catch {}
 
 export function getConsent(): ConsentState {
   try {

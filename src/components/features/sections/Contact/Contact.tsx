@@ -130,7 +130,6 @@ export function Contact({ theme }: SectionProps) {
       mainAlign="start"
       backgroundVideo="https://motionbgs.com/dl/hd/2915"
     >
-      <FeatureLocked feature="Contact" theme={theme}>
       <div
         ref={gridRef}
         className="mx-auto grid w-full max-w-[54rem] min-w-0 gap-8 md:grid-cols-[1fr_0.85fr]"
@@ -610,7 +609,8 @@ export function Contact({ theme }: SectionProps) {
           </div>
         </motion.div>
       </div>
-      <ContactProgramCards theme={theme} inputClass={inputClass} isValidEmail={isValidEmail} />
+      <FeatureLocked feature="Programs & Enquiry" theme={theme}>
+        <ContactProgramCards theme={theme} inputClass={inputClass} isValidEmail={isValidEmail} />
       </FeatureLocked>
     </SectionShell>
   )

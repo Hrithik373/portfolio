@@ -6,16 +6,6 @@
 
 ---
 
-## Screenshots
-
-### Desktop
-![Desktop Hero](./public/screenshots/desktop-hero.png)
-
-### Mobile
-![Mobile Hero](./public/screenshots/mobile-hero.png)
-
----
-
 ## Features
 
 ### Desktop View

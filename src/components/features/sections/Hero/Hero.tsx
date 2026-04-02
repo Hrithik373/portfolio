@@ -61,6 +61,7 @@ export function Hero({ theme }: SectionProps) {
           muted
           loop
           playsInline
+          preload="auto"
         />
         <div
           className={

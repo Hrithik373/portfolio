@@ -42,6 +42,7 @@ export function SectionShell({
             muted
             loop
             playsInline
+            preload="auto"
           />
           <div
             className={

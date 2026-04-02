@@ -81,14 +81,33 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
     }
   }, [expanded])
 
-  // Fetch playlist once
+  // Fetch directly from Deezer — browser IPs are not blocked unlike datacenter IPs
   useEffect(() => {
-    fetch(apiUrl('/api/spotify/playlist'))
-      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json() as Promise<PlaylistData> })
-      .then((data) => {
-        const playable = data.tracks.filter((t) => t.previewUrl)
-        const shuffled = playable.sort(() => Math.random() - 0.5)
-        setPlaylist({ ...data, tracks: shuffled })
+    fetch('https://api.deezer.com/playlist/3884439882')
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((data: any) => {
+        const tracks: Track[] = (data.tracks?.data ?? [])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((t: any) => t?.id && t?.preview)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((t: any): Track => ({
+            id: String(t.id),
+            name: t.title,
+            artist: t.artist?.name ?? 'Unknown',
+            albumArt: t.album?.cover_big ?? t.album?.cover ?? null,
+            previewUrl: t.preview,
+            spotifyUrl: t.link ?? `https://www.deezer.com/track/${t.id}`,
+            durationMs: (t.duration ?? 0) * 1000,
+          }))
+        const shuffled = (tracks as Track[]).sort(() => Math.random() - 0.5)
+        setPlaylist({
+          name: data.title,
+          description: data.description ?? '',
+          image: data.picture_big ?? null,
+          externalUrl: data.link ?? 'https://www.deezer.com',
+          tracks: shuffled,
+        })
         setStatus('ready')
       })
       .catch(() => setStatus('error'))

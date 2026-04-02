@@ -52,7 +52,7 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
   }, [expanded])
 
   return (
-    <div ref={containerRef} className="fixed left-4 top-4 z-[60] flex items-start gap-2">
+    <div ref={containerRef} className="fixed left-4 z-[60] flex items-start gap-2" style={{ top: 'max(16px, env(safe-area-inset-top, 16px))' }}>
 
       {/* Circle FAB */}
       <button

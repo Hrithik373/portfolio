@@ -1,5 +1,5 @@
 
-All rights reserved. No part of this project may be used or reproduced without explicit written permission from Hrithik Ghosh @2026
+All rights reserved. No part of this project may be used or reproduced without explicit written permission from Hrithik Ghosh [hrithikgh29@gmail.com] @2026
 
 
 # Hrithik Ghosh — Portfolio

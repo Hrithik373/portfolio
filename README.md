@@ -1,73 +1,44 @@
-# React + TypeScript + Vite
+# Hrithik Ghosh — Personal Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal portfolio website of Hrithik Ghosh — AI & ML Engineer.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Copyright & Legal Notice
 
-## React Compiler
+**Copyright © 2026 Hrithik Ghosh. All Rights Reserved.**
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This repository and all of its contents — including but not limited to source code, design, graphics, animations, text, layout, structure, and any other creative or technical elements — are the exclusive intellectual property of **Hrithik Ghosh**.
 
-## Expanding the ESLint configuration
+### Restrictions
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Unauthorized use, reproduction, modification, distribution, transmission, republication, display, or performance of any material from this repository is strictly prohibited without the express prior written permission of the copyright holder.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+You may **not**:
+- Copy, clone, or fork this repository for personal or commercial use
+- Use any part of this codebase as a template or starting point for another project
+- Reproduce the design, UI, or visual identity in any form
+- Use the content, copy, or personal information contained herein for any purpose
+- Redistribute or sublicense any part of this work
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Permitted Use
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Viewing this repository for personal, non-commercial reference only is permitted. No other rights are granted.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Contact
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+For licensing inquiries or permissions, contact: **hrithikgh29@gmail.com**
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+## Tech Stack
+
+- React + TypeScript + Vite
+- Tailwind CSS + Framer Motion + GSAP
+- Node.js + Express backend (Render)
+- Upstash Redis
+- Deployed on Vercel
+
+---
+
+*All rights reserved. No part of this project may be used or reproduced without explicit written permission from Hrithik Ghosh.*

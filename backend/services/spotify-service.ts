@@ -26,13 +26,29 @@ export interface SpotifyPlaylistData {
 export async function getPlaylistData(playlistId: string): Promise<SpotifyPlaylistData> {
   const url = `https://api.deezer.com/playlist/${encodeURIComponent(playlistId)}`
 
-  const res = await fetch(url)
+  const res = await fetch(url, {
+    headers: {
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      'Origin': 'https://www.deezer.com',
+      'Referer': 'https://www.deezer.com/',
+    },
+  })
+
   if (!res.ok) {
     throw new Error(`Deezer playlist fetch failed (${res.status}) for playlist ${playlistId}`)
   }
 
+  const text = await res.text()
+
+  // Deezer sometimes returns HTML when blocking server IPs
+  if (text.trimStart().startsWith('<')) {
+    throw new Error('Deezer returned HTML instead of JSON — likely blocked by bot detection')
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data = (await res.json()) as any
+  const data = JSON.parse(text) as any
 
   if (data.error) {
     throw new Error(`Deezer API error: ${JSON.stringify(data.error)}`)

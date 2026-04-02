@@ -1,47 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
 
-const EMBED_URL =
-  'https://open.spotify.com/embed/playlist/4jg2gFqMf3RE8ACFx1IGTx?utm_source=generator&theme=0'
-
-function EqualizerBars({ active }: { active: boolean }) {
-  const bars = [
-    { h: [2, 10, 4, 14, 3], d: 0.55 },
-    { h: [10, 3, 14, 2, 9], d: 0.7 },
-    { h: [4, 14, 2, 10, 6], d: 0.5 },
-    { h: [14, 3, 9, 4, 12], d: 0.65 },
-  ]
-  return (
-    <div className="flex items-end gap-[2px]" style={{ height: 14 }}>
-      {bars.map((bar, i) =>
-        active ? (
-          <motion.div
-            key={i}
-            className="w-[2px] rounded-full"
-            style={{ background: '#e8927c' }}
-            animate={{ height: bar.h }}
-            transition={{ duration: bar.d, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
-          />
-        ) : (
-          <div key={i} className="w-[2px] rounded-full" style={{ height: 3, background: 'rgba(138,181,192,0.45)' }} />
-        )
-      )}
-    </div>
-  )
-}
+const VIDEO_ID = 'mVycGYAPehY'
+const EMBED_URL = `https://www.youtube.com/embed/${VIDEO_ID}?autoplay=0&controls=1&rel=0&modestbranding=1&color=white`
 
 export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day' }) {
   const [expanded, setExpanded] = useState(false)
-  const [active, setActive] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const isNight = theme === 'night'
+  const night = theme === 'night'
 
-  // Close on outside tap — music keeps playing
   useEffect(() => {
     if (!expanded) return
     const handler = (e: MouseEvent | TouchEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setExpanded(false) // hide panel, NOT unmount iframe
+        setExpanded(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -52,96 +23,95 @@ export function SpotifyMiniPlayer({ theme = 'night' }: { theme?: 'night' | 'day'
     }
   }, [expanded])
 
-  const night = isNight
-  const fabBg = night
-    ? 'radial-gradient(circle at 35% 30%, #0d2a38, #07161f)'
-    : 'radial-gradient(circle at 35% 30%, #c8e4ea, #e8f4f7)'
-  const fabBorder = active
-    ? 'rgba(232,146,124,0.6)'
-    : night ? 'rgba(30,74,92,0.65)' : 'rgba(168,207,216,0.65)'
-  const fabShadow = active
-    ? '0 0 18px rgba(232,146,124,0.35), 0 0 0 1px rgba(232,146,124,0.15)'
-    : '0 4px 16px rgba(0,0,0,0.5)'
-
   return (
     <div
       ref={containerRef}
       className="fixed left-3 z-[60]"
       style={{ top: 'max(14px, env(safe-area-inset-top, 14px))' }}
     >
-      {/* ── FAB circle ── */}
+      {/* Pill trigger */}
       <button
         type="button"
-        onClick={() => { setExpanded((v) => !v); setActive(true) }}
-        aria-label={expanded ? 'Collapse player' : 'Open music player'}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-xl transition-transform active:scale-90"
-        style={{ background: fabBg, borderColor: fabBorder, boxShadow: fabShadow }}
+        onClick={() => setExpanded((v) => !v)}
+        aria-label={expanded ? 'Minimize player' : 'Open music player'}
+        className="flex items-center gap-2 rounded-full border px-3 py-1.5 backdrop-blur-xl transition-all active:scale-95"
+        style={{
+          background: night ? 'rgba(7,22,31,0.88)' : 'rgba(232,244,247,0.92)',
+          borderColor: night ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          boxShadow: night ? '0 2px 16px rgba(0,0,0,0.5)' : '0 2px 12px rgba(0,0,0,0.1)',
+        }}
       >
-        <span className="font-jp-hand text-base leading-none" style={{ color: '#e8927c' }}>蛤</span>
-        {/* Equalizer bars at bottom of circle */}
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
-          <EqualizerBars active={active} />
-        </div>
-        {active && (
-          <span className="absolute inset-0 animate-ping rounded-full border border-[#e8927c]/20 pointer-events-none" />
-        )}
+        {/* Music icon */}
+        <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="currentColor"
+          style={{ color: '#e8927c' }}>
+          <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
+        </svg>
+        <span
+          className="text-[0.6rem] font-medium tracking-wide"
+          style={{ color: night ? 'rgba(240,232,224,0.8)' : 'rgba(26,58,70,0.8)' }}
+        >
+          {expanded ? 'minimise' : 'music'}
+        </span>
+        {/* Chevron */}
+        <svg
+          className="h-2.5 w-2.5 shrink-0 transition-transform duration-200"
+          style={{
+            color: night ? 'rgba(138,181,192,0.6)' : 'rgba(74,122,138,0.6)',
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+        >
+          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
-      {/* ── Spotify embed panel — always in DOM, only hidden visually ── */}
+      {/* Player panel — always in DOM, hidden via CSS so audio persists */}
       <div
-        className="absolute left-0 overflow-hidden rounded-2xl transition-all duration-300"
+        className="absolute left-0 overflow-hidden rounded-2xl transition-all duration-300 ease-out"
         style={{
-          top: 'calc(100% + 8px)',
-          width: expanded ? 288 : 0,
+          top: 'calc(100% + 6px)',
+          width: expanded ? 280 : 0,
           height: expanded ? 'auto' : 0,
           opacity: expanded ? 1 : 0,
           pointerEvents: expanded ? 'auto' : 'none',
-          boxShadow: expanded
-            ? night
-              ? '0 8px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(30,74,92,0.4)'
-              : '0 8px 32px rgba(0,0,0,0.15)'
-            : 'none',
+          border: expanded ? `1px solid ${night ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}` : 'none',
+          boxShadow: expanded ? (night ? '0 12px 48px rgba(0,0,0,0.6)' : '0 8px 32px rgba(0,0,0,0.12)') : 'none',
+          background: night ? 'rgba(7,22,31,0.98)' : 'rgba(232,244,247,0.98)',
         }}
       >
-        {/* Header */}
+        {/* Minimal header */}
         <div
           className="flex items-center justify-between px-3 py-2"
-          style={{
-            background: night ? 'rgba(7,22,31,0.98)' : 'rgba(232,244,247,0.98)',
-            borderBottom: `1px solid ${night ? 'rgba(30,74,92,0.4)' : 'rgba(168,207,216,0.4)'}`,
-          }}
+          style={{ borderBottom: `1px solid ${night ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` }}
         >
-          <div className="flex items-center gap-1.5">
-            <span className="font-jp-hand text-sm" style={{ color: '#e8927c' }}>蛤</span>
-            <span
-              className="text-[0.5rem] font-semibold uppercase tracking-[0.18em]"
-              style={{ color: night ? '#8ab5c0' : '#4a7a8a' }}
-            >
-              はまぐり · Deep Sea Picks
-            </span>
-          </div>
+          <span
+            className="text-[0.55rem] uppercase tracking-[0.2em] font-medium"
+            style={{ color: night ? 'rgba(138,181,192,0.7)' : 'rgba(74,122,138,0.7)' }}
+          >
+            now playing
+          </span>
           <button
             type="button"
             onClick={() => setExpanded(false)}
-            aria-label="Minimize player"
-            className="rounded-full p-1 transition-opacity hover:opacity-100"
-            style={{ color: night ? '#8ab5c0' : '#4a7a8a', opacity: 0.5 }}
+            aria-label="Minimise"
+            style={{ color: night ? 'rgba(138,181,192,0.5)' : 'rgba(74,122,138,0.5)' }}
           >
-            <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
 
-        {/* Spotify iframe — always rendered so music doesn't stop on collapse */}
+        {/* YouTube iframe — never unmounted */}
         <iframe
           src={EMBED_URL}
-          width="288"
-          height="320"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          width="280"
+          height="157"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowFullScreen
           loading="lazy"
           style={{ display: 'block', border: 'none' }}
-          title="はまぐり Deep Sea Picks"
+          title="Music player"
         />
       </div>
     </div>

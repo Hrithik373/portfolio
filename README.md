@@ -4,7 +4,7 @@ All rights reserved. No part of this project may be used or reproduced without e
 
 # Hrithik Ghosh — Portfolio
 
-**Live:** [hrithikghosh.vercel.app](https://hrithikghosh.vercel.app)
+**Live:** [hrithikghosh.vercel.app](https://hrithikgh.vercel.app)
 
 > Personal portfolio of Hrithik Ghosh — AI & ML Engineer specialising in RAG pipelines, multilingual voice interfaces, and production-grade backend systems.
 

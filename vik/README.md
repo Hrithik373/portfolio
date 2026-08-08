@@ -52,45 +52,58 @@ Then:
 
 Re-run the `ingest` step any time `ingest/sources/*.md` changes.
 
-## Deploying to Render
+## Deploying to Google Cloud Run
 
-`render.yaml` (repo root, alongside the portfolio's existing Node API
-service) defines the full Python/Java service inventory as Render
-Blueprint services: Kong, svc-agent, svc-rag, svc-guard, svc-crm (+ a
-managed Postgres), svc-voice, svc-translate, svc-vision — all free tier.
+A Render Blueprint attempt (`render.yaml`) was built and pushed first, but
+Render suspended the whole account's workspace over a failed recurring
+card charge (an RBI e-mandate issue common with Indian cards on foreign
+SaaS billing, unrelated to this repo) before any service could actually
+deploy — so the target moved to Cloud Run instead. The dead Render config
+was removed rather than left dormant; it's still recoverable from git
+history if Render's billing ever gets sorted out.
 
-**Deliberately not part of this Blueprint** (each for a different reason,
-not just "left out"):
+`.github/workflows/ci.yml`'s `deploy` job builds and deploys 7 services on
+push to `main`: Kong (the edge), svc-agent, svc-rag, svc-guard, svc-voice,
+svc-translate, svc-vision — all on Cloud Run's free tier (2M requests/mo,
+genuinely perpetual, not a trial).
+
+**Deliberately not part of this deploy** (each for a different reason, not
+just "left out"):
 
 | Piece | Why not |
 |---|---|
-| Ollama | Needs several GB RAM + a persistent disk for the model; free tier (≈512MB RAM, ephemeral disk) can't run it. svc-agent on Render is Groq-only — already tested to degrade gracefully (not crash) if the quota is hit. |
+| svc-crm | Needs a managed Postgres, and Cloud SQL isn't in Cloud Run's free tier (costs from the first byte, unlike Cloud Run itself) — and it's not on the live chat path yet anyway (svc-agent's `capture_lead` tool doesn't call it). |
+| Ollama | Needs several GB RAM + a persistent disk for the model; Cloud Run's free tier can't run it. svc-agent here is Groq-only — already tested to degrade gracefully (not crash) if the quota is hit. |
 | Kafka, ArcadeDB, ArangoDB | No always-free managed option exists for any of them, and nothing in the live code path reads/writes them yet (Phase 3 TODOs) — deploying empty, disconnected infrastructure has no value. |
-| MongoDB | No Render-native offering; self-hosting on free tier loses all data on every restart (ephemeral disk). The real fix is a free MongoDB Atlas cluster — needs your own sign-up, not something this repo can set up for you. Not wired into any live code path yet either. |
-| Keycloak, Prometheus, Grafana | Technically deployable, but need the same class of env-var/scrape-target templating as Kong's did, and none sit on the live chat path yet. Deferred, not blocked — straightforward follow-up. |
+| MongoDB | No Cloud Run-native offering; the real fix is a free MongoDB Atlas cluster — needs your own sign-up. Not wired into any live code path yet either. |
+| Keycloak, Prometheus, Grafana | Technically deployable, but need the same class of env-var/scrape-target templating Kong needed, and none sit on the live chat path yet. Deferred, not blocked. |
 
-**Setup** (Blueprint services need manual approval in Render's dashboard the
-first time, and every `sync: false` secret needs its real value set there —
-neither is something that can be done from a repo):
+**Setup** (all one-time GCP-side steps only you can do — a service account
+key and project ID aren't something this repo can generate):
 
-1. Push this branch, then in Render: New → Blueprint → select this repo.
-   Render will list the new `vik-*` services and `vik-postgres` alongside
-   the existing `hrithik-portfolio-api` — approve them.
-2. Set `GROQ_API_KEY` on `vik-svc-agent` and `vik-svc-guard` (same key
-   works for both — get one free at console.groq.com).
-3. Check `vik-svc-crm`'s `DB_URL` once it's deployed — see the comment in
-   `svc-crm/src/main/resources/application.yml`; Render's Postgres
-   connection-string property may need a `jdbc:` prefix added by hand.
-4. If Render appended a collision suffix to any planned service name
-   (`vik-kong`, `vik-svc-agent`, etc.), update the cross-service URLs in
-   `vik-kong`'s env vars and the `/vik-api` rewrite in the root
-   `vercel.json` to match the real hostname.
+1. Create a GCP project, enable the Cloud Run, Artifact Registry, and
+   Cloud Build APIs, and enable billing on it.
+2. Create the Artifact Registry repo once: `gcloud artifacts repositories
+   create vik --repository-format=docker --location=asia-south1`
+3. Create a deploy service account with the Cloud Run Admin, Artifact
+   Registry Writer, and Service Account User roles; download its JSON key.
+4. In this repo's GitHub settings, add secrets: `GCP_SA_KEY` (the JSON key
+   contents), `GCP_PROJECT_ID`, and `GROQ_API_KEY` (same key works for
+   svc-agent and svc-guard both — free at console.groq.com; also already
+   used by the `eval-gate` job).
+5. Push to `main` — the `deploy` job runs after `build` passes.
+6. Once it's live, update the `/vik-api` rewrite in the root
+   `vercel.json` to point at Kong's real `*.a.run.app` URL (the workflow's
+   last step prints it) — Cloud Run assigns that URL only after the first
+   deploy, so it can't be predicted ahead of time the way a fixed hostname
+   could.
 
 None of this has been confirmed live from this session — I can build and
-locally verify the deploy configs (Docker builds succeed, the `PORT`
-contract works, Kong's template substitution produces valid config), but
-not Render's actual networking or build environment. Report back what
-Render's dashboard shows and I'll fix forward from there.
+locally verify the Dockerfiles, the `PORT` contract, and Kong's template
+substitution, but not an actual `gcloud run deploy`, real Artifact
+Registry push, or Cloud Run's real networking. Report back what the
+GitHub Actions run and Cloud Run console show and I'll fix forward from
+there.
 
 ## Why the KB content needs your review
 

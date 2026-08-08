@@ -1,14 +1,14 @@
-# Render-specific build — bakes the FAISS index in at build time, instead
-# of docker-compose's pattern of mounting a volume populated by the
-# separate `ingest` one-off job. Render has no shared volume between two
+# Cloud Run deployment build — bakes the FAISS index in at build time,
+# instead of docker-compose's pattern of mounting a volume populated by the
+# separate `ingest` one-off job. Cloud Run has no shared volume between two
 # independently-deployed services, so the index has to live inside this
-# image itself. Re-running this build (i.e. every Render deploy) re-indexes
+# image itself. Re-running this build (i.e. every CI deploy) re-indexes
 # from whatever's currently in ingest/sources/*.md.
 #
 # Build context must be `vik/` (not `vik/svc-rag/`), since this needs
-# `ingest/` as a sibling directory — see render.yaml's `dockerContext` for
-# this service. Local docker-compose dev keeps using the plain `Dockerfile`
-# in this directory instead (mounts the index at runtime, faster iteration).
+# `ingest/` as a sibling directory. Local docker-compose dev keeps using
+# the plain `Dockerfile` in this directory instead (mounts the index at
+# runtime, faster iteration).
 FROM python:3.11-slim
 
 WORKDIR /svc

@@ -1,0 +1,28 @@
+# Cloud Run deployment build — local docker-compose keeps using the plain
+# `kong:3.7` image + a bind-mounted kong.yml (see infra/docker-compose.yml);
+# Cloud Run has no bind mounts and each upstream service's URL isn't known
+# until its own first deploy, so this bakes in a template + envsubst
+# entrypoint instead. Build context: vik/gateway/ (this directory).
+#
+# Base image note: kong:3.7 is Ubuntu-based (not Alpine — apk isn't
+# present), confirmed by actually building this locally.
+FROM kong:3.7
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends gettext-base \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY kong.template.yml /kong.template.yml
+COPY cloudrun-entrypoint.sh /cloudrun-entrypoint.sh
+RUN chmod +x /cloudrun-entrypoint.sh
+
+ENV KONG_DATABASE=off
+# Written by cloudrun-entrypoint.sh at container start, not baked in —
+# /tmp is the one world-writable path in this image, since the `kong` user
+# (which USER below switches to) doesn't own `/` (confirmed locally: writing
+# to /kong.yml as the kong user fails with Permission denied).
+ENV KONG_DECLARATIVE_CONFIG=/tmp/kong.yml
+ENV KONG_ADMIN_LISTEN=off
+
+USER kong
+ENTRYPOINT ["/cloudrun-entrypoint.sh"]

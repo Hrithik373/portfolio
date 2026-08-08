@@ -1,11 +1,13 @@
 _format_version: "3.0"
 _transform: true
 
-# Render-specific template — same routing/rate-limiting shape as kong.yml
-# (used by local docker-compose), but upstream `url:` fields are ${VAR}
-# placeholders substituted at container start by render-entrypoint.sh,
-# since each service's real Render URL isn't known until deploy time. See
-# Dockerfile.render.
+# Cloud Run deployment template — same routing/rate-limiting shape as
+# kong.yml (used by local docker-compose), but upstream `url:` fields are
+# ${VAR} placeholders substituted at container start by
+# cloudrun-entrypoint.sh. Cloud Run assigns each service's real URL only
+# after its first deploy (unlike a predictable hostname), so the CI
+# workflow captures those and passes them in as env vars — see
+# Dockerfile.cloudrun and .github/workflows/ci.yml's deploy job.
 
 services:
   - name: svc-agent
@@ -76,19 +78,8 @@ services:
           - /api/vision
         strip_path: true
 
-  - name: svc-crm
-    url: ${SVC_CRM_URL}
-    routes:
-      - name: crm-route
-        paths:
-          - /api/crm
-        strip_path: true
-    plugins:
-      # Phase 3 TODO: gate write routes (POST /leads, /graphql mutations)
-      # behind Keycloak JWT/OIDC once web-admin does real token exchange.
-      - name: cors
-        config:
-          origins:
-            - ${FRONTEND_ORIGIN}
-          methods: [GET, POST, OPTIONS]
-          headers: [Content-Type]
+  # svc-crm intentionally not deployed to Cloud Run this pass — needs a
+  # managed Postgres, which isn't in Cloud Run's free tier (Cloud SQL
+  # costs from the first byte), and it's not on the live chat path yet
+  # anyway (svc-agent's capture_lead tool doesn't call it). Local
+  # docker-compose's kong.yml still has the full svc-crm route.

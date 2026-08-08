@@ -137,13 +137,157 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
             ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
 
-  # ---- deploy ----
-  # TODO: point this at a live k3s host once Tier 1 hosting (architecture
-  # doc §9) actually exists. Left commented rather than faked — there is no
-  # cluster for this to deploy to yet.
+  # ---- deploy (Google Cloud Run) ----
+  # Tier 1 hosting per architecture doc §9. Deploys svc-agent, svc-rag,
+  # svc-guard, svc-voice, svc-translate, svc-vision, and Kong (the edge) —
+  # NOT svc-crm (needs a managed Postgres, which isn't in Cloud Run's free
+  # tier; also not on the live chat path yet), and NOT Ollama/Kafka/
+  # ArcadeDB/ArangoDB/Keycloak/Prometheus/Grafana (see vik/README.md for
+  # why each specifically isn't deployed).
+  #
+  # Requires (one-time, done by you, not this workflow — see vik/README.md):
+  #   - A GCP project with the Cloud Run, Artifact Registry, and Cloud
+  #     Build APIs enabled.
+  #   - An Artifact Registry Docker repo: `gcloud artifacts repositories
+  #     create vik --repository-format=docker --location=asia-south1`
+  #   - A deploy service account with the Cloud Run Admin + Artifact
+  #     Registry Writer + Service Account User roles, its JSON key added as
+  #     the `GCP_SA_KEY` repo secret, and the project ID as `GCP_PROJECT_ID`.
+  #   - `GROQ_API_KEY` repo secret (already used by eval-gate above).
+  #
+  # Cloud Run assigns each service's real URL only after its own first
+  # deploy — there's no predictable hostname the way a fixed domain would
+  # give you, so this builds+deploys the 6 backend services first, captures
+  # their real URLs from each deploy step's `url` output, then deploys Kong
+  # last with those real URLs wired in as env vars for its envsubst
+  # template (see gateway/kong.template.yml, cloudrun-entrypoint.sh).
   deploy:
-    if: false
+    if: github.event_name == 'push'
     needs: [build]
     runs-on: ubuntu-latest
+    env:
+      REGION: asia-south1
+      REPO: asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/vik
     steps:
-      - run: echo "TODO -- helm upgrade --install vik infra/helm -f infra/helm/values.yaml"
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
+      # ---- 6 backend services, no cross-dependencies among themselves ----
+      - name: Build + push svc-rag (bakes the FAISS index in — see Dockerfile.cloudrun)
+        working-directory: vik
+        run: |
+          docker build -f svc-rag/Dockerfile.cloudrun -t $REPO/svc-rag:${{ github.sha }} .
+          docker push $REPO/svc-rag:${{ github.sha }}
+      - id: deploy-svc-rag
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vik-svc-rag
+          image: ${{ env.REPO }}/svc-rag:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: --allow-unauthenticated --port=8011 --memory=1Gi
+
+      - name: Build + push svc-guard
+        working-directory: vik/svc-guard
+        run: |
+          docker build -t $REPO/svc-guard:${{ github.sha }} .
+          docker push $REPO/svc-guard:${{ github.sha }}
+      - id: deploy-svc-guard
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vik-svc-guard
+          image: ${{ env.REPO }}/svc-guard:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: --allow-unauthenticated --port=8012
+          env_vars: |
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+            GROQ_MODEL_JUDGE=llama-3.3-70b-versatile
+
+      - name: Build + push svc-voice
+        working-directory: vik/svc-voice
+        run: |
+          docker build -t $REPO/svc-voice:${{ github.sha }} .
+          docker push $REPO/svc-voice:${{ github.sha }}
+      - id: deploy-svc-voice
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vik-svc-voice
+          image: ${{ env.REPO }}/svc-voice:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: --allow-unauthenticated --port=8013
+          env_vars: LOAD_MODELS=false
+
+      - name: Build + push svc-translate
+        working-directory: vik/svc-translate
+        run: |
+          docker build -t $REPO/svc-translate:${{ github.sha }} .
+          docker push $REPO/svc-translate:${{ github.sha }}
+      - id: deploy-svc-translate
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vik-svc-translate
+          image: ${{ env.REPO }}/svc-translate:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: --allow-unauthenticated --port=8014
+          env_vars: LOAD_MODELS=false
+
+      - name: Build + push svc-vision
+        working-directory: vik/svc-vision
+        run: |
+          docker build -t $REPO/svc-vision:${{ github.sha }} .
+          docker push $REPO/svc-vision:${{ github.sha }}
+      - id: deploy-svc-vision
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vik-svc-vision
+          image: ${{ env.REPO }}/svc-vision:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: --allow-unauthenticated --port=8015
+
+      # ---- svc-agent: needs svc-rag + svc-guard's real URLs ----
+      - name: Build + push svc-agent
+        working-directory: vik/svc-agent
+        run: |
+          docker build -t $REPO/svc-agent:${{ github.sha }} .
+          docker push $REPO/svc-agent:${{ github.sha }}
+      - id: deploy-svc-agent
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vik-svc-agent
+          image: ${{ env.REPO }}/svc-agent:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: --allow-unauthenticated --port=8010
+          env_vars: |
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+            GROQ_MODEL_ANSWER=llama-3.3-70b-versatile
+            SVC_RAG_URL=${{ steps.deploy-svc-rag.outputs.url }}
+            SVC_GUARD_URL=${{ steps.deploy-svc-guard.outputs.url }}
+
+      # ---- Kong: needs every other service's real URL, deploys last ----
+      - name: Build + push Kong
+        working-directory: vik/gateway
+        run: |
+          docker build -f Dockerfile.cloudrun -t $REPO/kong:${{ github.sha }} .
+          docker push $REPO/kong:${{ github.sha }}
+      - id: deploy-kong
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vik-kong
+          image: ${{ env.REPO }}/kong:${{ github.sha }}
+          region: ${{ env.REGION }}
+          flags: --allow-unauthenticated --port=8000
+          env_vars: |
+            SVC_AGENT_URL=${{ steps.deploy-svc-agent.outputs.url }}
+            SVC_RAG_URL=${{ steps.deploy-svc-rag.outputs.url }}
+            SVC_GUARD_URL=${{ steps.deploy-svc-guard.outputs.url }}
+            SVC_VOICE_URL=${{ steps.deploy-svc-voice.outputs.url }}
+            SVC_TRANSLATE_URL=${{ steps.deploy-svc-translate.outputs.url }}
+            SVC_VISION_URL=${{ steps.deploy-svc-vision.outputs.url }}
+            FRONTEND_ORIGIN=https://hrithikgh.vercel.app
+
+      - name: Print Kong's real URL — update vercel.json's /vik-api rewrite to this
+        run: echo "Kong is live at ${{ steps.deploy-kong.outputs.url }}"

@@ -20,16 +20,17 @@ python ../ingest/index_kb.py         # builds ../data/faiss_index/
 FAISS_INDEX_DIR=../data/faiss_index uvicorn app.main:app --reload --port 8011
 ```
 
-## Dockerfile vs Dockerfile.render
+## Dockerfile vs Dockerfile.cloudrun
 
 The plain `Dockerfile` (used by local docker-compose) expects the FAISS
 index mounted at runtime from a volume the separate `ingest` one-off job
-populates. `Dockerfile.render` (used by the root `render.yaml`) instead
-bakes the index in at *build* time — copies `ingest/sources/` and
-`index_kb.py` into the image and runs the indexing as a build step —
-since Render has no shared volume between two independently-deployed
-services. Build context for `Dockerfile.render` is `vik/` (not
-`vik/svc-rag/`), since it needs `ingest/` as a sibling directory.
+populates. `Dockerfile.cloudrun` (used by `.github/workflows/ci.yml`'s
+`deploy` job) instead bakes the index in at *build* time — copies
+`ingest/sources/` and `index_kb.py` into the image and runs the indexing
+as a build step — since Cloud Run has no shared volume between two
+independently-deployed services. Build context for `Dockerfile.cloudrun`
+is `vik/` (not `vik/svc-rag/`), since it needs `ingest/` as a sibling
+directory.
 
 ## API
 

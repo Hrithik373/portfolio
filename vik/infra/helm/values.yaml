@@ -1,0 +1,93 @@
+# Images aren't published anywhere yet (Phase 0) — `imageRegistry` is a
+# placeholder. Phase 2+ TODO: point this at GHCR once CI's build job (see
+# .github/workflows/ci.yml) actually pushes tagged images.
+imageRegistry: ghcr.io/hrithik373/vik
+imageTag: latest
+
+services:
+  - name: svc-agent
+    port: 8010
+    replicas: 1
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilization: 70
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+
+  - name: svc-rag
+    port: 8011
+    replicas: 1
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilization: 70
+    resources:
+      requests: { cpu: 200m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }
+
+  - name: svc-guard
+    port: 8012
+    replicas: 1
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilization: 70
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+
+  - name: svc-voice
+    port: 8013
+    replicas: 1
+    autoscaling:
+      # Standard HorizontalPodAutoscaler requires minReplicas >= 1 — true
+      # scale-to-zero for these on-demand showcase services (architecture
+      # doc §9) would need KEDA instead of vanilla HPA; not wired here.
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilization: 70
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+
+  - name: svc-translate
+    port: 8014
+    replicas: 1
+    autoscaling:
+      # Standard HorizontalPodAutoscaler requires minReplicas >= 1 — true
+      # scale-to-zero for these on-demand showcase services (architecture
+      # doc §9) would need KEDA instead of vanilla HPA; not wired here.
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilization: 70
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+
+  - name: svc-vision
+    port: 8015
+    replicas: 1
+    autoscaling:
+      # Standard HorizontalPodAutoscaler requires minReplicas >= 1 — true
+      # scale-to-zero for these on-demand showcase services (architecture
+      # doc §9) would need KEDA instead of vanilla HPA; not wired here.
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilization: 70
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+
+  - name: svc-crm
+    port: 8016
+    healthPath: /actuator/health
+    replicas: 1
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilization: 70
+    resources:
+      requests: { cpu: 200m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }

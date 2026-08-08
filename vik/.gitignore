@@ -1,0 +1,20 @@
+# Root .gitignore already covers node_modules/, .env*, dist/, .DS_Store —
+# this file adds the Python/Java/generated-artifact patterns specific to vik/.
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Java / Maven
+target/
+
+# Generated KB index — rebuilt by `docker compose run --rm ingest`, not committed
+data/faiss_index/*
+!data/faiss_index/.gitkeep
+
+# NLTK data downloaded at ingest time
+nltk_data/

@@ -1,0 +1,35 @@
+# Render-specific build — bakes the FAISS index in at build time, instead
+# of docker-compose's pattern of mounting a volume populated by the
+# separate `ingest` one-off job. Render has no shared volume between two
+# independently-deployed services, so the index has to live inside this
+# image itself. Re-running this build (i.e. every Render deploy) re-indexes
+# from whatever's currently in ingest/sources/*.md.
+#
+# Build context must be `vik/` (not `vik/svc-rag/`), since this needs
+# `ingest/` as a sibling directory — see render.yaml's `dockerContext` for
+# this service. Local docker-compose dev keeps using the plain `Dockerfile`
+# in this directory instead (mounts the index at runtime, faster iteration).
+FROM python:3.11-slim
+
+WORKDIR /svc
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY svc-rag/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# index_kb.py expects a `sources/` dir next to itself (see its SOURCES_DIR).
+COPY ingest/sources ./sources
+COPY ingest/index_kb.py .
+ENV FAISS_INDEX_DIR=/svc/data/faiss_index
+RUN mkdir -p /svc/data && python index_kb.py
+
+COPY svc-rag/app ./app
+
+RUN useradd --create-home vik && chown -R vik:vik /svc
+USER vik
+
+EXPOSE 8011
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8011}

@@ -14,6 +14,7 @@ import { Footer } from '../components/features/sections/Footer/Footer'
 import { Hero } from '../components/features/sections/Hero/Hero'
 import { Projects } from '../components/features/sections/Projects/Projects'
 import { Skills } from '../components/features/sections/Skills/Skills'
+import { Vik } from '../components/features/sections/Vik/Vik'
 import { useBlossomSound } from '../hooks/useBlossomSound'
 import { trackVisitor } from '../lib/visitor-tracker'
 
@@ -46,6 +47,7 @@ const sections = [
   { id: 'projects', label: 'Projects' },
   { id: 'experience', label: 'Experience' },
   { id: 'blogpost', label: 'Blog' },
+  { id: 'vik', label: 'Vik' },
   { id: 'contact', label: 'Contact' },
 ]
 
@@ -377,6 +379,7 @@ export default function DesktopPortfolio() {
         <Projects theme={theme} />
         <Experience theme={theme} />
         <BlogPost theme={theme} />
+        <Vik theme={theme} />
         <Contact theme={theme} />
         <Footer theme={theme} />
       </main>

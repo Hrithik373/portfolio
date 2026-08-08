@@ -1,0 +1,14 @@
+type Lead {
+    id: ID!
+    name: String!
+    email: String!
+    note: String
+    source: String
+    createdAt: String!
+}
+
+type Query {
+    "All captured leads. Phase 3 TODO: paginate + auth-gate once web-admin (Keycloak) queries this for real."
+    leads: [Lead!]!
+    lead(id: ID!): Lead
+}

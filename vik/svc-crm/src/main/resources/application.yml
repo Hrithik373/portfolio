@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: svc-crm
+  datasource:
+    # Unset -> H2 in-memory (local dev / tests, zero config needed).
+    # docker-compose sets DB_URL directly to a full jdbc:postgresql:// string.
+    # Render: render.yaml sources this from the managed Postgres's
+    # connectionString — if that comes back without a `jdbc:` scheme prefix
+    # (Render's property may be a bare `postgresql://...` URI, not
+    # JDBC-formatted), add the prefix manually in the Render dashboard's
+    # env var editor. Not verifiable from a local session — see vik's
+    # Render deployment notes.
+    url: ${DB_URL:jdbc:h2:mem:vikcrm;DB_CLOSE_DELAY=-1}
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  graphql:
+    graphiql:
+      enabled: true
+    path: /graphql
+
+# ${PORT:8016} reads the OS env var PORT (Spring's placeholder-with-default
+# syntax) — Render's Docker-runtime web services inject PORT and require
+# the app to bind to it; docker-compose never sets PORT, so this falls
+# back to 8016 there.
+server:
+  port: ${PORT:8016}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never

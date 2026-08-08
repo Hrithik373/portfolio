@@ -9,6 +9,7 @@ import { Field } from '../Field/Field'
 import { SectionShell } from '../SectionShell/SectionShell'
 import type { SectionProps } from '../SectionTypes'
 import { dayGlassSection, nightGlassSection } from '../sectionGlass'
+import { VikOrb } from '../Vik/VikOrb'
 import { collectFingerprint } from '../../../../lib/fingerprint'
 
 export type BlogPostProps = SectionProps & { embedded?: boolean }
@@ -323,27 +324,6 @@ function RoadmapIcon({ kind, isNight }: { kind: 'trace' | 'voice' | 'journal'; i
   )
 }
 
-function VikOrb({ isNight, reduced }: { isNight: boolean; reduced: boolean }) {
-  const nightGrad = 'radial-gradient(circle at 35% 30%, rgba(167,139,250,0.55) 0%, rgba(56,189,248,0.35) 42%, rgba(15,23,42,0.95) 72%)'
-  const dayGrad = 'radial-gradient(circle at 35% 30%, rgba(244,114,182,0.5) 0%, rgba(251,191,36,0.28) 45%, rgba(255,255,255,0.92) 70%)'
-  return (
-    <div className="relative flex h-[5rem] w-[5rem] shrink-0 items-center justify-center sm:h-[5.5rem] sm:w-[5.5rem]">
-      <motion.div className="absolute inset-[-20%] rounded-full blur-2xl"
-        style={{ background: isNight ? 'rgba(129,140,248,0.35)' : 'rgba(244,114,182,0.32)' }}
-        animate={reduced ? { opacity: 0.4 } : { opacity: [0.32, 0.55, 0.32], scale: [1, 1.04, 1] }}
-        transition={{ duration: 5, repeat: reduced ? 0 : Infinity, ease: softLoop }} aria-hidden />
-      <motion.div className="relative h-[4.25rem] w-[4.25rem] rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-white/15 sm:h-[4.75rem] sm:w-[4.75rem]"
-        style={{ background: isNight ? nightGrad : dayGrad }}
-        animate={reduced ? {} : { boxShadow: isNight
-          ? ['0 0 0 0 rgba(129,140,248,0)', '0 0 36px 6px rgba(56,189,248,0.22)', '0 0 0 0 rgba(129,140,248,0)']
-          : ['0 0 0 0 rgba(244,114,182,0)', '0 0 40px 8px rgba(251,191,36,0.2)', '0 0 0 0 rgba(244,114,182,0)'] }}
-        transition={{ duration: 3.5, repeat: reduced ? 0 : Infinity, ease: softLoop }} />
-      <motion.span className={`relative z-10 font-heading text-[0.68rem] font-semibold uppercase tracking-[0.32em] ${isNight ? 'text-white/92' : 'text-[color:var(--dawn-text)]'}`}
-        animate={reduced ? {} : { opacity: [0.82, 1, 0.82] }} transition={{ duration: 3.2, repeat: reduced ? 0 : Infinity, ease: softLoop }}>Vik</motion.span>
-    </div>
-  )
-}
-
 /* ────────────────────────────────────────────────
  * Main BlogPost component
  * ──────────────────────────────────────────────── */
@@ -420,6 +400,14 @@ export function BlogPost({ theme, embedded = false }: BlogPostProps) {
                 A personal research-and-action agent: grounded retrieval, careful tool use, and human-readable traces —
                 the editorial spine of this journal.
               </p>
+              <a
+                href={embedded ? '#m-vik' : '#vik'}
+                className={`mt-4 inline-flex items-center gap-1.5 text-[0.68rem] font-medium uppercase tracking-[0.2em] transition-colors ${
+                  isNight ? 'text-sakura-pink/75 hover:text-sakura-pink' : 'text-rose-500/80 hover:text-rose-600'
+                }`}
+              >
+                Talk to Vik <span aria-hidden>↓</span>
+              </a>
             </div>
           </div>
           <div className={`hidden h-24 w-px shrink-0 lg:block ${isNight ? 'bg-gradient-to-b from-transparent via-white/15 to-transparent' : 'bg-gradient-to-b from-transparent via-rose-200/50 to-transparent'}`} aria-hidden />

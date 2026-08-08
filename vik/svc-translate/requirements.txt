@@ -1,0 +1,6 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+prometheus-client==0.21.1
+pydantic==2.10.3
+# Phase 4 TODO: add transformers + sentencepiece + an NLLB checkpoint here
+# once real translation is wired — see app/models.py.

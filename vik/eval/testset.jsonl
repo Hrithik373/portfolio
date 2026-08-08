@@ -1,0 +1,12 @@
+{"question": "What was Hrithik's role at ITU?", "expected_source": "resume.md", "category": "resume"}
+{"question": "What did Hrithik do at Amdocs?", "expected_source": "resume.md", "category": "resume"}
+{"question": "Where did Hrithik study for his Master's degree?", "expected_source": "resume.md", "category": "resume"}
+{"question": "What is the Agentic RAG Evaluator project about?", "expected_source": "projects/ara.md", "category": "project"}
+{"question": "What models were used in the SMS spam detection project?", "expected_source": "projects/sms-spam.md", "category": "project"}
+{"question": "What technologies power the retail sales forecasting project?", "expected_source": "projects/retail-forecast.md", "category": "project"}
+{"question": "What does the LLM QA Bot project do?", "expected_source": "projects/llm-qa-bot.md", "category": "project"}
+{"question": "Tell me about the emotion detection project", "expected_source": "projects/emotion-detection.md", "category": "project"}
+{"question": "Is Hrithik open to sponsorship or relocation?", "expected_source": "faq.md", "category": "faq"}
+{"question": "How can a recruiter contact Hrithik?", "expected_source": "faq.md", "category": "faq"}
+{"question": "What is Vik?", "expected_source": "faq.md", "category": "faq"}
+{"question": "What is Hrithik's personal motto or tone?", "expected_source": "voice.md", "category": "voice"}

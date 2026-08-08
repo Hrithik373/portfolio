@@ -1,0 +1,24 @@
+# Render-specific build — local docker-compose keeps using the plain
+# `kong:3.7` image + a bind-mounted kong.yml (see infra/docker-compose.yml);
+# Render has no bind mounts and each upstream service's URL isn't known
+# until deploy time, so this bakes in a template + envsubst entrypoint
+# instead. Build context: vik/gateway/ (this directory).
+FROM kong:3.7
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends gettext-base \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY kong.template.yml /kong.template.yml
+COPY render-entrypoint.sh /render-entrypoint.sh
+RUN chmod +x /render-entrypoint.sh
+
+ENV KONG_DATABASE=off
+# Written by render-entrypoint.sh at container start, not baked in — /tmp is
+# the one world-writable path in this image, since the `kong` user (which
+# USER below switches to) doesn't own `/`.
+ENV KONG_DECLARATIVE_CONFIG=/tmp/kong.yml
+ENV KONG_ADMIN_LISTEN=off
+
+USER kong
+ENTRYPOINT ["/render-entrypoint.sh"]

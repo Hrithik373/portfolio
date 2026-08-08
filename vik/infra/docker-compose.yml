@@ -1,0 +1,259 @@
+name: vik
+
+networks:
+  vik-net:
+
+volumes:
+  postgres_data:
+  mongo_data:
+  arangodb_data:
+  arcadedb_data:
+  grafana_data:
+  ollama_data:
+
+services:
+  # ---- gateway ----
+  kong:
+    image: kong:3.7
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+    volumes:
+      - ../gateway/kong.yml:/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    networks: [vik-net]
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      svc-agent: { condition: service_started }
+      svc-rag: { condition: service_started }
+      svc-guard: { condition: service_started }
+      svc-voice: { condition: service_started }
+      svc-translate: { condition: service_started }
+      svc-vision: { condition: service_started }
+      svc-crm: { condition: service_started }
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-keycloak-devpassword}
+    volumes:
+      - ../gateway/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8080:8080"
+    networks: [vik-net]
+
+  # ---- one-off jobs ----
+  # Run before starting svc-rag (or after editing ingest/sources/*.md):
+  #   docker compose run --rm ingest
+  # Mounts the same /data/faiss_index path svc-rag reads from, read-write —
+  # see ingest/index_kb.py's docstring for why this must match exactly.
+  ingest:
+    build: ../ingest
+    environment:
+      FAISS_INDEX_DIR: /data/faiss_index
+    volumes:
+      - ../data/faiss_index:/data/faiss_index
+    networks: [vik-net]
+    profiles: [tools]
+
+  # Local fallback model — no API key, no external quota, ever. Used only
+  # when Groq errors (rate limit / outage); see svc-agent/app/agent.py.
+  # First-time setup: docker compose exec ollama ollama pull llama3.1:8b
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks: [vik-net]
+
+  # ---- Python services ----
+  svc-agent:
+    build: ../svc-agent
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL_ANSWER: ${GROQ_MODEL_ANSWER:-llama-3.3-70b-versatile}
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+      SVC_RAG_URL: http://svc-rag:8011
+      SVC_GUARD_URL: http://svc-guard:8012
+    ports:
+      - "8010:8010"
+    networks: [vik-net]
+    depends_on:
+      - svc-rag
+      - svc-guard
+      - ollama
+
+  svc-rag:
+    build: ../svc-rag
+    environment:
+      FAISS_INDEX_DIR: /data/faiss_index
+    volumes:
+      - ../data/faiss_index:/data/faiss_index:ro
+    ports:
+      - "8011:8011"
+    networks: [vik-net]
+
+  svc-guard:
+    build: ../svc-guard
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL_JUDGE: ${GROQ_MODEL_JUDGE:-llama-3.3-70b-versatile}
+    ports:
+      - "8012:8012"
+    networks: [vik-net]
+
+  svc-voice:
+    build: ../svc-voice
+    environment:
+      LOAD_MODELS: "false"
+    ports:
+      - "8013:8013"
+    networks: [vik-net]
+
+  svc-translate:
+    build: ../svc-translate
+    environment:
+      LOAD_MODELS: "false"
+    ports:
+      - "8014:8014"
+    networks: [vik-net]
+
+  svc-vision:
+    build: ../svc-vision
+    ports:
+      - "8015:8015"
+    networks: [vik-net]
+
+  # ---- Java service ----
+  svc-crm:
+    build: ../svc-crm
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/vikcrm
+      DB_USER: vik
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres-devpassword}
+    ports:
+      - "8016:8016"
+    networks: [vik-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---- datastores ----
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: vikcrm
+      POSTGRES_USER: vik
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres-devpassword}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks: [vik-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vik -d vikcrm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks: [vik-net]
+
+  kafka:
+    image: apache/kafka:3.8.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks: [vik-net]
+
+  arcadedb:
+    image: arcadedata/arcadedb:latest
+    environment:
+      JAVA_OPTS: "-Darcadedb.server.rootPassword=${ARCADEDB_ROOT_PASSWORD:-arcadedb-devpassword}"
+    volumes:
+      - arcadedb_data:/home/arcadedb/databases
+    ports:
+      - "2480:2480"
+    networks: [vik-net]
+
+  arangodb:
+    image: arangodb:3.12
+    environment:
+      ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD:-arango-devpassword}
+    volumes:
+      - arangodb_data:/var/lib/arangodb3
+    ports:
+      - "8529:8529"
+    networks: [vik-net]
+
+  # ---- observability ----
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks: [vik-net]
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-grafana-devpassword}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks: [vik-net]
+    depends_on:
+      - prometheus
+
+  # ---- frontends (dev-mode only; see each Dockerfile's comment) ----
+  web-widget:
+    build: ../web-widget
+    environment:
+      VITE_AGENT_CHAT_URL: http://localhost:8000/api/agent/chat
+    ports:
+      - "5173:5173"
+    networks: [vik-net]
+    profiles: [dev]
+
+  web-admin:
+    build: ../web-admin
+    environment:
+      VITE_KEYCLOAK_URL: http://localhost:8080
+      VITE_KEYCLOAK_REALM: vik
+      VITE_KEYCLOAK_CLIENT_ID: vik-admin
+      VITE_CRM_GRAPHQL_URL: http://localhost:8016/graphql
+    ports:
+      - "5174:5174"
+    networks: [vik-net]
+    profiles: [dev]

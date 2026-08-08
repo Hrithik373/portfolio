@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: svc-agent
+    static_configs:
+      - targets: ["svc-agent:8010"]
+
+  - job_name: svc-rag
+    static_configs:
+      - targets: ["svc-rag:8011"]
+
+  - job_name: svc-guard
+    static_configs:
+      - targets: ["svc-guard:8012"]
+
+  - job_name: svc-voice
+    static_configs:
+      - targets: ["svc-voice:8013"]
+
+  - job_name: svc-translate
+    static_configs:
+      - targets: ["svc-translate:8014"]
+
+  - job_name: svc-vision
+    static_configs:
+      - targets: ["svc-vision:8015"]
+
+  - job_name: svc-crm
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["svc-crm:8016"]

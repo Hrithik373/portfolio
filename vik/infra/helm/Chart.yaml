@@ -1,0 +1,9 @@
+apiVersion: v2
+name: vik
+description: >-
+  Helm chart for the Vik agent's application services (excludes datastores —
+  those are expected to be managed separately, e.g. RDS/managed Kafka in a
+  real deployment; see architecture doc §9's Tier 1/Tier 2 hosting notes).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

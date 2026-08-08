@@ -1,0 +1,38 @@
+{{- range .Values.services }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .name }}
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: "{{ $.Values.imageRegistry }}/{{ .name }}:{{ $.Values.imageTag }}"
+          ports:
+            - containerPort: {{ .port }}
+          livenessProbe:
+            httpGet:
+              path: {{ .healthPath | default "/health" }}
+              port: {{ .port }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: {{ .healthPath | default "/health" }}
+              port: {{ .port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+---
+{{- end }}

@@ -1,0 +1,108 @@
+:root {
+  --text: #2a2a2a;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --accent: #aa3bff;
+  --bubble-vik: #f4f3ec;
+  --bubble-user: #aa3bff;
+  --bubble-user-text: #fff;
+
+  font: 16px/145% system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #d6d3db;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --accent: #c084fc;
+    --bubble-vik: #1f2028;
+    --bubble-user: #c084fc;
+    --bubble-user-text: #16171d;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.vik-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  border-inline: 1px solid var(--border);
+}
+
+.vik-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vik-chat__bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  white-space: pre-wrap;
+  font-size: 14px;
+}
+
+.vik-chat__bubble--vik {
+  align-self: flex-start;
+  background: var(--bubble-vik);
+  color: var(--text);
+}
+
+.vik-chat__bubble--user {
+  align-self: flex-end;
+  background: var(--bubble-user);
+  color: var(--bubble-user-text);
+}
+
+.vik-chat__input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.vik-chat__input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.vik-chat__input-row button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.vik-chat__input-row button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

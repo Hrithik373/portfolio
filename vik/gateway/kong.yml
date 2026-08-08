@@ -1,0 +1,97 @@
+_format_version: "3.0"
+_transform: true
+
+# Declarative (DB-less) Kong config — one edge for the whole stack.
+# Route naming: /api/<service-name-without-svc->/... -> that service.
+
+services:
+  - name: svc-agent
+    url: http://svc-agent:8010
+    routes:
+      - name: agent-route
+        paths:
+          - /api/agent
+        strip_path: true
+    plugins:
+      - name: cors
+        config:
+          origins:
+            # vik/web-widget + vik/web-admin dev ports
+            - http://localhost:5173
+            - http://localhost:5174
+            # hrithikghportfolio's own dev server, which lands on whichever
+            # port is free (5175+ when Vik's own frontends are also up —
+            # see hrithikghportfolio/vite.config.ts's /vik-api proxy, which
+            # is what dev traffic actually goes through; this list is for
+            # anyone hitting Kong directly instead).
+            - http://localhost:5175
+            - http://localhost:4173
+          methods: [GET, POST, OPTIONS]
+          headers: [Content-Type]
+      - name: rate-limiting
+        config:
+          minute: 20
+          policy: local
+
+  - name: svc-rag
+    url: http://svc-rag:8011
+    routes:
+      - name: rag-route
+        paths:
+          - /api/rag
+        strip_path: true
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+
+  - name: svc-guard
+    url: http://svc-guard:8012
+    routes:
+      - name: guard-route
+        paths:
+          - /api/guard
+        strip_path: true
+
+  - name: svc-voice
+    url: http://svc-voice:8013
+    routes:
+      - name: voice-route
+        paths:
+          - /api/voice
+        strip_path: true
+
+  - name: svc-translate
+    url: http://svc-translate:8014
+    routes:
+      - name: translate-route
+        paths:
+          - /api/translate
+        strip_path: true
+
+  - name: svc-vision
+    url: http://svc-vision:8015
+    routes:
+      - name: vision-route
+        paths:
+          - /api/vision
+        strip_path: true
+
+  - name: svc-crm
+    url: http://svc-crm:8016
+    routes:
+      - name: crm-route
+        paths:
+          - /api/crm
+        strip_path: true
+    plugins:
+      # Phase 3 TODO: gate write routes (POST /leads, /graphql mutations)
+      # behind Keycloak JWT/OIDC once web-admin does real token exchange —
+      # see gateway/keycloak/realm-export.json and web-admin/src/auth.ts.
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5174
+          methods: [GET, POST, OPTIONS]
+          headers: [Content-Type]

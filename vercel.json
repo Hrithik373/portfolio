@@ -63,6 +63,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://portfolio-api-gkcd.onrender.com/api/:path*"
+    },
+    {
+      "source": "/vik-api/:path*",
+      "destination": "https://vik-kong.onrender.com/api/:path*"
     }
   ]
 }

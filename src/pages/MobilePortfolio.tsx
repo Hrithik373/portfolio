@@ -7,6 +7,7 @@ import { apiUrl } from '../config/apiBase'
 import { MidnightScrollBackground } from '../components/features/backgrounds/MidnightScrollBackground'
 import { SakuraCanvas } from '../components/features/petals/SakuraCanvas'
 import { BlogPost } from '../components/features/sections/BlogPost/BlogPost'
+import { Vik } from '../components/features/sections/Vik/Vik'
 import { ContactProgramCards } from '../components/features/sections/Contact/ContactProgramCards'
 import { SectionSakuraRain } from '../components/features/petals/FloatingCardPetals'
 import { VoiceCardPetals } from '../components/features/petals/VoiceCardPetals'
@@ -26,6 +27,7 @@ const sections = [
   { id: 'm-projects', label: 'Work', icon: folderIcon },
   { id: 'm-experience', label: 'Path', icon: briefcaseIcon },
   { id: 'm-blogpost', label: 'Blog', icon: blogIcon },
+  { id: 'm-vik', label: 'Vik', icon: vikIcon },
   { id: 'm-contact', label: 'Contact', icon: mailIcon },
 ]
 
@@ -49,6 +51,9 @@ function mailIcon() {
 }
 function blogIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-5 w-5"><path d="M4 19.5a2.5 2.5 0 0 1 2.5-2.5H20" strokeLinecap="round" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" strokeLinecap="round" strokeLinejoin="round" /><path d="M8 7h8M8 11h6" strokeLinecap="round" /></svg>
+}
+function vikIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-5 w-5"><path d="M4 5h16v11H8l-4 4V5z" strokeLinecap="round" strokeLinejoin="round" /><circle cx="9" cy="10.5" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="10.5" r="0.9" fill="currentColor" stroke="none" /><circle cx="15" cy="10.5" r="0.9" fill="currentColor" stroke="none" /></svg>
 }
 
 const ease = [0.22, 1, 0.36, 1] as const
@@ -339,6 +344,10 @@ export default function MobilePortfolio() {
 
         <MobileSection id="m-blogpost" eyebrow="Journal" title="Blogpost" showPetals theme={theme}>
           <BlogPost theme={theme} embedded />
+        </MobileSection>
+
+        <MobileSection id="m-vik" eyebrow="AI Agent" title="Vik" theme={theme}>
+          <Vik theme={theme} embedded />
         </MobileSection>
 
         <MobileSection id="m-contact" eyebrow="Reach out" title="Contact" showPetals theme={theme}>

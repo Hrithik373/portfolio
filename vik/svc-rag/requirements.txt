@@ -1,0 +1,28 @@
+# farm-haystack 1.26.4's Document/Answer schema classes use pydantic's
+# dataclass decorator in a way that only works under pydantic v1 (they
+# genuinely crash at import time under v2 — a pandas.DataFrame field schema
+# generation error). Modern FastAPI (0.100+) requires pydantic v2, so this
+# service is pinned to the last FastAPI release built for pydantic v1
+# instead. This conflict is local to svc-rag's own container/venv — no
+# other service in this repo combines FastAPI with farm-haystack.
+fastapi==0.99.1
+pydantic==1.10.13
+uvicorn[standard]==0.32.1
+prometheus-client==0.21.1
+# See ingest/requirements.txt for why faiss-cpu is pinned separately instead
+# of using farm-haystack's own [faiss] extra.
+farm-haystack==1.26.4
+faiss-cpu==1.9.0
+sentence-transformers==3.0.1
+# FAISSDocumentStore is backed by SQLDocumentStore for metadata; farm-haystack
+# doesn't declare this as a hard dependency, so it's listed explicitly here.
+SQLAlchemy==1.4.54
+# PreProcessor's split_respect_sentence_boundary=True needs nltk's sentence
+# tokenizer — also not a hard farm-haystack dependency.
+nltk==3.9.1
+# farm-haystack 1.26.4 requires transformers>=4.46, but also imports
+# `SequenceSummary` from transformers.modeling_utils at module load time
+# (even for the sentence-transformers retriever path, which doesn't need
+# it) — later transformers releases removed that class, so this is pinned
+# to the earliest non-yanked release satisfying both constraints.
+transformers==4.46.3

@@ -1,0 +1,94 @@
+_format_version: "3.0"
+_transform: true
+
+# Render-specific template — same routing/rate-limiting shape as kong.yml
+# (used by local docker-compose), but upstream `url:` fields are ${VAR}
+# placeholders substituted at container start by render-entrypoint.sh,
+# since each service's real Render URL isn't known until deploy time. See
+# Dockerfile.render.
+
+services:
+  - name: svc-agent
+    url: ${SVC_AGENT_URL}
+    routes:
+      - name: agent-route
+        paths:
+          - /api/agent
+        strip_path: true
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - ${FRONTEND_ORIGIN}
+            - http://localhost:5173
+            - http://localhost:5174
+            - http://localhost:5175
+            - http://localhost:4173
+          methods: [GET, POST, OPTIONS]
+          headers: [Content-Type]
+      - name: rate-limiting
+        config:
+          minute: 20
+          policy: local
+
+  - name: svc-rag
+    url: ${SVC_RAG_URL}
+    routes:
+      - name: rag-route
+        paths:
+          - /api/rag
+        strip_path: true
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+
+  - name: svc-guard
+    url: ${SVC_GUARD_URL}
+    routes:
+      - name: guard-route
+        paths:
+          - /api/guard
+        strip_path: true
+
+  - name: svc-voice
+    url: ${SVC_VOICE_URL}
+    routes:
+      - name: voice-route
+        paths:
+          - /api/voice
+        strip_path: true
+
+  - name: svc-translate
+    url: ${SVC_TRANSLATE_URL}
+    routes:
+      - name: translate-route
+        paths:
+          - /api/translate
+        strip_path: true
+
+  - name: svc-vision
+    url: ${SVC_VISION_URL}
+    routes:
+      - name: vision-route
+        paths:
+          - /api/vision
+        strip_path: true
+
+  - name: svc-crm
+    url: ${SVC_CRM_URL}
+    routes:
+      - name: crm-route
+        paths:
+          - /api/crm
+        strip_path: true
+    plugins:
+      # Phase 3 TODO: gate write routes (POST /leads, /graphql mutations)
+      # behind Keycloak JWT/OIDC once web-admin does real token exchange.
+      - name: cors
+        config:
+          origins:
+            - ${FRONTEND_ORIGIN}
+          methods: [GET, POST, OPTIONS]
+          headers: [Content-Type]

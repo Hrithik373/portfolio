@@ -1,0 +1,21 @@
+# Classic Haystack + FAISS pairing (farm-haystack 1.x ships FAISSDocumentStore
+# natively; Haystack 2.x dropped built-in FAISS support in favor of other stores,
+# but FAISS is what's on the résumé, so we pin to the version that has it).
+# farm-haystack's own [faiss] extra pins faiss-cpu<=1.7.2, which has no wheel
+# for modern Python — install faiss-cpu separately at a current version instead;
+# FAISSDocumentStore only needs `import faiss` to work, not that exact pin.
+farm-haystack==1.26.4
+faiss-cpu==1.9.0
+sentence-transformers==3.0.1
+# FAISSDocumentStore is backed by SQLDocumentStore for metadata; farm-haystack
+# doesn't declare this as a hard dependency, so it's listed explicitly here.
+SQLAlchemy==1.4.54
+# PreProcessor's split_respect_sentence_boundary=True needs nltk's sentence
+# tokenizer — also not a hard farm-haystack dependency.
+nltk==3.9.1
+# farm-haystack 1.26.4 requires transformers>=4.46, but also imports
+# `SequenceSummary` from transformers.modeling_utils at module load time
+# (even for the sentence-transformers retriever path, which doesn't need
+# it) — later transformers releases removed that class, so this is pinned
+# to the earliest non-yanked release satisfying both constraints.
+transformers==4.46.3
